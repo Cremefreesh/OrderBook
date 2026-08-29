@@ -7,7 +7,7 @@
 
 class OrderBook {
 public:
-    void addLimitOrder(const Order& order);
+    void addLimitOrder(Order order);
 
     Price bestBid() const;
     Price bestAsk() const;

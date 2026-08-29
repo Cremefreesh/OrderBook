@@ -1,4 +1,5 @@
 #include "order_book.hpp"
+#include <algorithm>
 
 Price OrderBook::bestBid() const {
     if (bids_.empty()) {
@@ -16,36 +17,103 @@ Price OrderBook::bestAsk() const {
     return asks_.begin()->first;
 }
 
-void OrderBook::addLimitOrder(const Order& order) {
+void OrderBook::addLimitOrder(Order order) {
     if (order.side == Side::Buy) {
-        auto it = bids_.find(order.price);
 
-        if (it == bids_.end()) {
-            PriceLevel level {
-                order.price,
-                {}
-            };
+        while (order.quantity > 0 && !asks_.empty()) {
+            auto bestAskIt = asks_.begin();
 
-            level.orders.push_back(order);
+            Price bestAskPrice = bestAskIt->first;
 
-            bids_.emplace(order.price, std::move(level));
-        } else {
-            it->second.orders.push_back(order);
+            if (order.price < bestAskPrice) {
+                break;
+            }
+
+            PriceLevel& level = bestAskIt->second;
+
+            while (order.quantity > 0 && !level.orders.empty()) {
+                Order& restingOrder = level.orders.front();
+
+                Quantity tradedQuantity =
+                    std::min(order.quantity, restingOrder.quantity);
+
+                order.quantity -= tradedQuantity;
+                restingOrder.quantity -= tradedQuantity;
+
+                if (restingOrder.quantity == 0) {
+                    level.orders.pop_front();
+                }
+            }
+
+            if (level.orders.empty()) {
+                asks_.erase(bestAskIt);
+            }
         }
+
+        if (order.quantity > 0) {
+            auto it = bids_.find(order.price);
+
+            if (it == bids_.end()) {
+                PriceLevel level {
+                    order.price,
+                    {}
+                };
+
+                level.orders.push_back(order);
+
+                bids_.emplace(order.price, std::move(level));
+            } else {
+                it->second.orders.push_back(order);
+            }
+        }
+
     } else {
-        auto it = asks_.find(order.price);
 
-        if (it == asks_.end()) {
-            PriceLevel level {
-                order.price,
-                {}
-            };
+        while (order.quantity > 0 && !bids_.empty()) {
+            auto bestBidIt = bids_.begin();
 
-            level.orders.push_back(order);
+            Price bestBidPrice = bestBidIt->first;
 
-            asks_.emplace(order.price, std::move(level));
-        } else {
-            it->second.orders.push_back(order);
+            if (order.price > bestBidPrice) {
+                break;
+            }
+
+            PriceLevel& level = bestBidIt->second;
+
+            while (order.quantity > 0 && !level.orders.empty()) {
+                Order& restingOrder = level.orders.front();
+
+                Quantity tradedQuantity =
+                    std::min(order.quantity, restingOrder.quantity);
+
+                order.quantity -= tradedQuantity;
+                restingOrder.quantity -= tradedQuantity;
+
+                if (restingOrder.quantity == 0) {
+                    level.orders.pop_front();
+                }
+            }
+
+            if (level.orders.empty()) {
+                bids_.erase(bestBidIt);
+            }
+        }
+
+        if (order.quantity > 0) {
+            auto it = asks_.find(order.price);
+
+            if (it == asks_.end()) {
+                PriceLevel level {
+                    order.price,
+                    {}
+                };
+
+                level.orders.push_back(order);
+
+                asks_.emplace(order.price, std::move(level));
+            } else {
+                it->second.orders.push_back(order);
+            }
         }
     }
 }

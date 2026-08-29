@@ -16,3 +16,36 @@ Price OrderBook::bestAsk() const {
     return asks_.begin()->first;
 }
 
+void OrderBook::addLimitOrder(const Order& order) {
+    if (order.side == Side::Buy) {
+        auto it = bids_.find(order.price);
+
+        if (it == bids_.end()) {
+            PriceLevel level {
+                order.price,
+                {}
+            };
+
+            level.orders.push_back(order);
+
+            bids_.emplace(order.price, std::move(level));
+        } else {
+            it->second.orders.push_back(order);
+        }
+    } else {
+        auto it = asks_.find(order.price);
+
+        if (it == asks_.end()) {
+            PriceLevel level {
+                order.price,
+                {}
+            };
+
+            level.orders.push_back(order);
+
+            asks_.emplace(order.price, std::move(level));
+        } else {
+            it->second.orders.push_back(order);
+        }
+    }
+}

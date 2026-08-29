@@ -35,4 +35,23 @@ int main() {
     std::cout << "Best ask: " << book.bestAsk() << '\n';
 
     return 0;
+
+
+    auto trades = book.addLimitOrder({
+        3,
+        10005,
+        100,
+        Side::Buy
+    });
+
+    for (const Trade& trade : trades) {
+        std::cout
+            << "Trade: buy=" << trade.buyOrderId
+            << " sell=" << trade.sellOrderId
+            << " price=" << trade.price
+            << " quantity=" << trade.quantity
+            << '\n';
+    }
+
+
 }

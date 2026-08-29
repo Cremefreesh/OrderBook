@@ -11,3 +11,11 @@ add_executable(orderbook
 )
 
 target_include_directories(orderbook PRIVATE include)
+
+
+add_executable(orderbook_tests
+    tests/order_book_tests.cpp
+    src/order_book.cpp
+)
+
+target_include_directories(orderbook_tests PRIVATE include)

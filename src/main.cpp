@@ -23,20 +23,6 @@ int main() {
     std::cout << "Best bid: " << book.bestBid() << '\n';
     std::cout << "Best ask: " << book.bestAsk() << '\n';
 
-    book.addLimitOrder({
-        3,
-        10005,
-        100,
-        Side::Buy
-    });
-
-    std::cout << "\nAfter crossing order:\n";
-    std::cout << "Best bid: " << book.bestBid() << '\n';
-    std::cout << "Best ask: " << book.bestAsk() << '\n';
-
-    return 0;
-
-
     auto trades = book.addLimitOrder({
         3,
         10005,
@@ -53,5 +39,9 @@ int main() {
             << '\n';
     }
 
+    std::cout << "\nAfter crossing order:\n";
+    std::cout << "Best bid: " << book.bestBid() << '\n';
+    std::cout << "Best ask: " << book.bestAsk() << '\n';
 
+    return 0;
 }

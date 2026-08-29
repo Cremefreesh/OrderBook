@@ -17,7 +17,9 @@ Price OrderBook::bestAsk() const {
     return asks_.begin()->first;
 }
 
-void OrderBook::addLimitOrder(Order order) {
+std::vector<Trade> OrderBook::addLimitOrder(Order order) {
+    std::vector<Trade> trades;
+
     if (order.side == Side::Buy) {
 
         while (order.quantity > 0 && !asks_.empty()) {
@@ -36,6 +38,15 @@ void OrderBook::addLimitOrder(Order order) {
 
                 Quantity tradedQuantity =
                     std::min(order.quantity, restingOrder.quantity);
+
+                Trade trade {
+                    order.id,
+                    restingOrder.id,
+                    restingOrder.price,
+                    tradedQuantity
+                };
+
+                trades.push_back(trade);
 
                 order.quantity -= tradedQuantity;
                 restingOrder.quantity -= tradedQuantity;
@@ -86,6 +97,15 @@ void OrderBook::addLimitOrder(Order order) {
                 Quantity tradedQuantity =
                     std::min(order.quantity, restingOrder.quantity);
 
+                Trade trade {
+                    restingOrder.id,
+                    order.id,
+                    restingOrder.price,
+                    tradedQuantity
+                };
+
+                trades.push_back(trade);
+
                 order.quantity -= tradedQuantity;
                 restingOrder.quantity -= tradedQuantity;
 
@@ -116,4 +136,6 @@ void OrderBook::addLimitOrder(Order order) {
             }
         }
     }
+
+    return trades;
 }

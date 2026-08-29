@@ -1,8 +1,9 @@
 #pragma once
 
+#include <list>
 #include <map>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
 #include "order.hpp"
 #include "price_level.hpp"
@@ -29,4 +30,3 @@ private:
 
     std::unordered_map<OrderId, OrderLocation> orderIndex_;
 };
-

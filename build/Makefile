@@ -116,6 +116,67 @@ depend:
 	$(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
+#=============================================================================
+# Target rules for targets named orderbook
+
+# Build rule for target.
+orderbook: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 orderbook
+.PHONY : orderbook
+
+# fast build rule for target.
+orderbook/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/orderbook.dir/build.make CMakeFiles/orderbook.dir/build
+.PHONY : orderbook/fast
+
+src/main.o: src/main.cpp.o
+.PHONY : src/main.o
+
+# target to build an object file
+src/main.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/orderbook.dir/build.make CMakeFiles/orderbook.dir/src/main.cpp.o
+.PHONY : src/main.cpp.o
+
+src/main.i: src/main.cpp.i
+.PHONY : src/main.i
+
+# target to preprocess a source file
+src/main.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/orderbook.dir/build.make CMakeFiles/orderbook.dir/src/main.cpp.i
+.PHONY : src/main.cpp.i
+
+src/main.s: src/main.cpp.s
+.PHONY : src/main.s
+
+# target to generate assembly for a file
+src/main.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/orderbook.dir/build.make CMakeFiles/orderbook.dir/src/main.cpp.s
+.PHONY : src/main.cpp.s
+
+src/order_book.o: src/order_book.cpp.o
+.PHONY : src/order_book.o
+
+# target to build an object file
+src/order_book.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/orderbook.dir/build.make CMakeFiles/orderbook.dir/src/order_book.cpp.o
+.PHONY : src/order_book.cpp.o
+
+src/order_book.i: src/order_book.cpp.i
+.PHONY : src/order_book.i
+
+# target to preprocess a source file
+src/order_book.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/orderbook.dir/build.make CMakeFiles/orderbook.dir/src/order_book.cpp.i
+.PHONY : src/order_book.cpp.i
+
+src/order_book.s: src/order_book.cpp.s
+.PHONY : src/order_book.s
+
+# target to generate assembly for a file
+src/order_book.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/orderbook.dir/build.make CMakeFiles/orderbook.dir/src/order_book.cpp.s
+.PHONY : src/order_book.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -124,6 +185,13 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
+	@echo "... orderbook"
+	@echo "... src/main.o"
+	@echo "... src/main.i"
+	@echo "... src/main.s"
+	@echo "... src/order_book.o"
+	@echo "... src/order_book.i"
+	@echo "... src/order_book.s"
 .PHONY : help
 
 

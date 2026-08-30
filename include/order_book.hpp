@@ -14,6 +14,12 @@ class OrderBook {
 public:
     OrderResult addLimitOrder(Order order);
 
+    OrderResult addMarketOrder(
+        OrderId id,
+        Quantity quantity,
+        Side side
+    );
+
     bool cancelOrder(OrderId id);
 
     OrderResult modifyOrder(

@@ -45,7 +45,7 @@ OrderResult OrderBook::addLimitOrder(Order order) {
 
 
     // =========================================
-    // BUY ORDER
+    // BUY LIMIT ORDER
     // =========================================
 
     if (order.side == Side::Buy) {
@@ -62,6 +62,7 @@ OrderResult OrderBook::addLimitOrder(Order order) {
                 bestAskIt->first;
 
 
+            // Limit price does not cross.
             if (order.price < bestAskPrice) {
                 break;
             }
@@ -197,7 +198,7 @@ OrderResult OrderBook::addLimitOrder(Order order) {
 
 
     // =========================================
-    // SELL ORDER
+    // SELL LIMIT ORDER
     // =========================================
 
     else {
@@ -214,6 +215,7 @@ OrderResult OrderBook::addLimitOrder(Order order) {
                 bestBidIt->first;
 
 
+            // Limit price does not cross.
             if (order.price > bestBidPrice) {
                 break;
             }
@@ -352,6 +354,184 @@ OrderResult OrderBook::addLimitOrder(Order order) {
 }
 
 
+OrderResult OrderBook::addMarketOrder(
+    OrderId id,
+    Quantity quantity,
+    Side side
+) {
+
+    OrderResult result {
+        OrderStatus::Accepted,
+        {}
+    };
+
+
+    // -----------------------------------------
+    // Reject duplicate active OrderIds
+    // -----------------------------------------
+
+    if (orderIndex_.find(id) != orderIndex_.end()) {
+
+        result.status =
+            OrderStatus::DuplicateOrderId;
+
+        return result;
+    }
+
+
+    // =========================================
+    // MARKET BUY
+    // =========================================
+
+    if (side == Side::Buy) {
+
+        while (
+            quantity > 0 &&
+            !asks_.empty()
+        ) {
+
+            auto bestAskIt =
+                asks_.begin();
+
+
+            PriceLevel& level =
+                bestAskIt->second;
+
+
+            while (
+                quantity > 0 &&
+                !level.orders.empty()
+            ) {
+
+                Order& restingOrder =
+                    level.orders.front();
+
+
+                Quantity tradedQuantity =
+                    std::min(
+                        quantity,
+                        restingOrder.quantity
+                    );
+
+
+                Trade trade {
+                    id,
+                    restingOrder.id,
+                    restingOrder.price,
+                    tradedQuantity
+                };
+
+
+                result.trades.push_back(trade);
+
+
+                quantity -=
+                    tradedQuantity;
+
+                restingOrder.quantity -=
+                    tradedQuantity;
+
+
+                if (restingOrder.quantity == 0) {
+
+                    orderIndex_.erase(
+                        restingOrder.id
+                    );
+
+                    level.orders.pop_front();
+                }
+            }
+
+
+            if (level.orders.empty()) {
+                asks_.erase(bestAskIt);
+            }
+        }
+    }
+
+
+    // =========================================
+    // MARKET SELL
+    // =========================================
+
+    else {
+
+        while (
+            quantity > 0 &&
+            !bids_.empty()
+        ) {
+
+            auto bestBidIt =
+                bids_.begin();
+
+
+            PriceLevel& level =
+                bestBidIt->second;
+
+
+            while (
+                quantity > 0 &&
+                !level.orders.empty()
+            ) {
+
+                Order& restingOrder =
+                    level.orders.front();
+
+
+                Quantity tradedQuantity =
+                    std::min(
+                        quantity,
+                        restingOrder.quantity
+                    );
+
+
+                Trade trade {
+                    restingOrder.id,
+                    id,
+                    restingOrder.price,
+                    tradedQuantity
+                };
+
+
+                result.trades.push_back(trade);
+
+
+                quantity -=
+                    tradedQuantity;
+
+                restingOrder.quantity -=
+                    tradedQuantity;
+
+
+                if (restingOrder.quantity == 0) {
+
+                    orderIndex_.erase(
+                        restingOrder.id
+                    );
+
+                    level.orders.pop_front();
+                }
+            }
+
+
+            if (level.orders.empty()) {
+                bids_.erase(bestBidIt);
+            }
+        }
+    }
+
+
+    // Important:
+    //
+    // Any unfilled market-order quantity is NOT
+    // inserted into the book.
+    //
+    // Market orders never rest.
+
+    return result;
+}
+
+
 bool OrderBook::cancelOrder(OrderId id) {
 
     auto indexIt =
@@ -450,10 +630,6 @@ OrderResult OrderBook::modifyOrder(
         orderIndex_.find(id);
 
 
-    // -----------------------------------------
-    // Order doesn't exist
-    // -----------------------------------------
-
     if (indexIt == orderIndex_.end()) {
 
         return {
@@ -487,7 +663,7 @@ OrderResult OrderBook::modifyOrder(
 
 
     // -----------------------------------------
-    // Same price + quantity decrease
+    // Same price + lower/equal quantity
     //
     // Keep priority.
     // -----------------------------------------
@@ -538,11 +714,5 @@ OrderResult OrderBook::modifyOrder(
     };
 
 
-    // This is important:
-    //
-    // addLimitOrder() might produce trades.
-    //
-    // We now RETURN those trades instead of
-    // silently throwing them away.
     return addLimitOrder(replacement);
 }

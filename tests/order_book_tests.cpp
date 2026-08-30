@@ -47,7 +47,6 @@ void testExactFill() {
     });
 
     assert(result.accepted());
-
     assert(result.trades.size() == 1);
 
     assert(result.trades[0].buyOrderId == 2);
@@ -368,7 +367,6 @@ void testModifyCanGenerateTrades() {
     OrderBook book;
 
 
-    // Resting seller.
     book.addLimitOrder({
         1,
         10005,
@@ -377,7 +375,6 @@ void testModifyCanGenerateTrades() {
     });
 
 
-    // Resting buyer below the ask.
     book.addLimitOrder({
         2,
         10000,
@@ -386,9 +383,6 @@ void testModifyCanGenerateTrades() {
     });
 
 
-    // Move buyer from 10000 -> 10005.
-    //
-    // This now crosses the ask.
     auto result =
         book.modifyOrder(
             2,
@@ -411,6 +405,162 @@ void testModifyCanGenerateTrades() {
 }
 
 
+// =============================================
+// MARKET ORDER TESTS
+// =============================================
+
+
+void testMarketBuyConsumesBestAsk() {
+    OrderBook book;
+
+
+    book.addLimitOrder({
+        1,
+        10005,
+        50,
+        Side::Sell
+    });
+
+
+    auto result =
+        book.addMarketOrder(
+            2,
+            50,
+            Side::Buy
+        );
+
+
+    assert(result.accepted());
+
+    assert(result.trades.size() == 1);
+
+    assert(result.trades[0].buyOrderId == 2);
+    assert(result.trades[0].sellOrderId == 1);
+    assert(result.trades[0].price == 10005);
+    assert(result.trades[0].quantity == 50);
+
+    assert(book.bestAsk() == 0);
+}
+
+
+void testMarketSellConsumesBestBid() {
+    OrderBook book;
+
+
+    book.addLimitOrder({
+        1,
+        10000,
+        40,
+        Side::Buy
+    });
+
+
+    auto result =
+        book.addMarketOrder(
+            2,
+            40,
+            Side::Sell
+        );
+
+
+    assert(result.accepted());
+
+    assert(result.trades.size() == 1);
+
+    assert(result.trades[0].buyOrderId == 1);
+    assert(result.trades[0].sellOrderId == 2);
+    assert(result.trades[0].price == 10000);
+    assert(result.trades[0].quantity == 40);
+
+    assert(book.bestBid() == 0);
+}
+
+
+void testMarketOrderSweepsPriceLevels() {
+    OrderBook book;
+
+
+    book.addLimitOrder({
+        1,
+        10001,
+        20,
+        Side::Sell
+    });
+
+    book.addLimitOrder({
+        2,
+        10002,
+        20,
+        Side::Sell
+    });
+
+    book.addLimitOrder({
+        3,
+        10003,
+        20,
+        Side::Sell
+    });
+
+
+    auto result =
+        book.addMarketOrder(
+            4,
+            50,
+            Side::Buy
+        );
+
+
+    assert(result.accepted());
+
+    assert(result.trades.size() == 3);
+
+
+    assert(result.trades[0].price == 10001);
+    assert(result.trades[0].quantity == 20);
+
+
+    assert(result.trades[1].price == 10002);
+    assert(result.trades[1].quantity == 20);
+
+
+    assert(result.trades[2].price == 10003);
+    assert(result.trades[2].quantity == 10);
+
+
+    // 10 units should remain at 10003.
+    assert(book.bestAsk() == 10003);
+}
+
+
+void testMarketOrderDoesNotRest() {
+    OrderBook book;
+
+
+    auto result =
+        book.addMarketOrder(
+            1,
+            100,
+            Side::Buy
+        );
+
+
+    assert(result.accepted());
+
+    assert(result.trades.empty());
+
+
+    // There were no sellers,
+    // so the market buy disappears.
+    assert(book.bestBid() == 0);
+    assert(book.bestAsk() == 0);
+
+
+    // Since market orders never rest,
+    // there is nothing to cancel.
+    assert(!book.cancelOrder(1));
+}
+
+
 int main() {
 
     testNonCrossingOrders();
@@ -428,8 +578,13 @@ int main() {
     testModifyQuantityToZeroCancels();
     testQuantityDecreaseKeepsPriority();
     testQuantityIncreaseLosesPriority();
-
     testModifyCanGenerateTrades();
+
+
+    testMarketBuyConsumesBestAsk();
+    testMarketSellConsumesBestBid();
+    testMarketOrderSweepsPriceLevels();
+    testMarketOrderDoesNotRest();
 
 
     std::cout

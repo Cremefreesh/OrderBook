@@ -36,18 +36,8 @@ bool OrderBook::canFullyFillBuy(
     std::uint64_t availableQuantity = 0;
 
 
-    // asks_ is sorted lowest price first.
-    //
-    // Therefore we inspect:
-    //
-    // cheapest ask
-    // next cheapest ask
-    // next cheapest ask
-    // ...
     for (const auto& [price, level] : asks_) {
 
-        // Anything above our limit price
-        // cannot be used.
         if (price > limitPrice) {
             break;
         }
@@ -59,8 +49,6 @@ bool OrderBook::canFullyFillBuy(
                 order.quantity;
 
 
-            // Stop early as soon as we know
-            // enough liquidity exists.
             if (availableQuantity >= quantity) {
                 return true;
             }
@@ -84,11 +72,8 @@ bool OrderBook::canFullyFillSell(
     std::uint64_t availableQuantity = 0;
 
 
-    // bids_ is sorted highest price first.
     for (const auto& [price, level] : bids_) {
 
-        // Anything below the sell limit
-        // cannot be used.
         if (price < limitPrice) {
             break;
         }
@@ -301,6 +286,36 @@ OrderResult OrderBook::addLimitOrder(Order order) {
     };
 
 
+    // -----------------------------------------
+    // Validate quantity
+    // -----------------------------------------
+
+    if (order.quantity == 0) {
+
+        result.status =
+            OrderStatus::InvalidQuantity;
+
+        return result;
+    }
+
+
+    // -----------------------------------------
+    // Validate price
+    // -----------------------------------------
+
+    if (order.price <= 0) {
+
+        result.status =
+            OrderStatus::InvalidPrice;
+
+        return result;
+    }
+
+
+    // -----------------------------------------
+    // Reject duplicate active ID
+    // -----------------------------------------
+
     if (
         orderIndex_.find(order.id) !=
         orderIndex_.end()
@@ -503,6 +518,17 @@ OrderResult OrderBook::addMarketOrder(
     };
 
 
+    // Market orders have no limit price,
+    // but quantity still must be valid.
+    if (quantity == 0) {
+
+        result.status =
+            OrderStatus::InvalidQuantity;
+
+        return result;
+    }
+
+
     if (
         orderIndex_.find(id) !=
         orderIndex_.end()
@@ -556,6 +582,24 @@ OrderResult OrderBook::addImmediateOrCancelOrder(
     };
 
 
+    if (order.quantity == 0) {
+
+        result.status =
+            OrderStatus::InvalidQuantity;
+
+        return result;
+    }
+
+
+    if (order.price <= 0) {
+
+        result.status =
+            OrderStatus::InvalidPrice;
+
+        return result;
+    }
+
+
     if (
         orderIndex_.find(order.id) !=
         orderIndex_.end()
@@ -591,7 +635,6 @@ OrderResult OrderBook::addImmediateOrCancelOrder(
     }
 
 
-    // IOC remainder is discarded.
     return result;
 }
 
@@ -611,6 +654,32 @@ OrderResult OrderBook::addFillOrKillOrder(
 
 
     // -----------------------------------------
+    // Validate quantity
+    // -----------------------------------------
+
+    if (order.quantity == 0) {
+
+        result.status =
+            OrderStatus::InvalidQuantity;
+
+        return result;
+    }
+
+
+    // -----------------------------------------
+    // Validate price
+    // -----------------------------------------
+
+    if (order.price <= 0) {
+
+        result.status =
+            OrderStatus::InvalidPrice;
+
+        return result;
+    }
+
+
+    // -----------------------------------------
     // Reject duplicate active ID
     // -----------------------------------------
 
@@ -625,10 +694,6 @@ OrderResult OrderBook::addFillOrKillOrder(
         return result;
     }
 
-
-    // -----------------------------------------
-    // PRE-FLIGHT LIQUIDITY CHECK
-    // -----------------------------------------
 
     bool canFullyFill = false;
 
@@ -652,13 +717,6 @@ OrderResult OrderBook::addFillOrKillOrder(
     }
 
 
-    // -----------------------------------------
-    // Cannot fill entire quantity.
-    //
-    // IMPORTANT:
-    // We have not modified the book at all.
-    // -----------------------------------------
-
     if (!canFullyFill) {
 
         result.status =
@@ -667,12 +725,6 @@ OrderResult OrderBook::addFillOrKillOrder(
         return result;
     }
 
-
-    // -----------------------------------------
-    // Entire order can be executed.
-    //
-    // Now it is safe to perform matching.
-    // -----------------------------------------
 
     if (order.side == Side::Buy) {
 
@@ -815,12 +867,29 @@ OrderResult OrderBook::modifyOrder(
         *location.orderIt;
 
 
+    // Quantity zero intentionally means:
+    //
+    // cancel the existing order.
+    //
+    // So zero is VALID here even though it is
+    // invalid when submitting a new order.
     if (newQuantity == 0) {
 
         cancelOrder(id);
 
         return {
             OrderStatus::Accepted,
+            {}
+        };
+    }
+
+
+    // Any non-cancellation modification
+    // requires a valid price.
+    if (newPrice <= 0) {
+
+        return {
+            OrderStatus::InvalidPrice,
             {}
         };
     }

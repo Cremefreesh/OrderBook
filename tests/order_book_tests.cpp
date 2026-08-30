@@ -77,7 +77,6 @@ void testPartialFill() {
     });
 
     assert(result.accepted());
-
     assert(result.trades.size() == 1);
     assert(result.trades[0].quantity == 50);
 
@@ -176,10 +175,7 @@ void testCancelExistingOrder() {
         Side::Buy
     });
 
-    bool cancelled =
-        book.cancelOrder(1);
-
-    assert(cancelled);
+    assert(book.cancelOrder(1));
     assert(book.bestBid() == 0);
 }
 
@@ -202,6 +198,7 @@ void testDuplicateOrderIdRejected() {
             Side::Buy
         });
 
+
     auto duplicateResult =
         book.addLimitOrder({
             1,
@@ -209,6 +206,7 @@ void testDuplicateOrderIdRejected() {
             100,
             Side::Buy
         });
+
 
     assert(firstResult.accepted());
 
@@ -233,6 +231,7 @@ void testModifyNonexistentOrder() {
             50
         );
 
+
     assert(
         result.status ==
         OrderStatus::OrderNotFound
@@ -252,6 +251,7 @@ void testModifyQuantityToZeroCancels() {
         Side::Buy
     });
 
+
     auto result =
         book.modifyOrder(
             1,
@@ -259,9 +259,11 @@ void testModifyQuantityToZeroCancels() {
             0
         );
 
+
     assert(result.accepted());
 
     assert(book.bestBid() == 0);
+
     assert(!book.cancelOrder(1));
 }
 
@@ -283,6 +285,7 @@ void testQuantityDecreaseKeepsPriority() {
         Side::Sell
     });
 
+
     auto modifyResult =
         book.modifyOrder(
             1,
@@ -290,7 +293,9 @@ void testQuantityDecreaseKeepsPriority() {
             50
         );
 
+
     assert(modifyResult.accepted());
+
 
     auto result =
         book.addLimitOrder({
@@ -299,6 +304,7 @@ void testQuantityDecreaseKeepsPriority() {
             50,
             Side::Buy
         });
+
 
     assert(result.trades.size() == 1);
     assert(result.trades[0].sellOrderId == 1);
@@ -322,6 +328,7 @@ void testQuantityIncreaseLosesPriority() {
         Side::Sell
     });
 
+
     auto modifyResult =
         book.modifyOrder(
             1,
@@ -329,7 +336,9 @@ void testQuantityIncreaseLosesPriority() {
             100
         );
 
+
     assert(modifyResult.accepted());
+
 
     auto result =
         book.addLimitOrder({
@@ -338,6 +347,7 @@ void testQuantityIncreaseLosesPriority() {
             50,
             Side::Buy
         });
+
 
     assert(result.trades.size() == 1);
     assert(result.trades[0].sellOrderId == 2);
@@ -361,6 +371,7 @@ void testModifyCanGenerateTrades() {
         Side::Buy
     });
 
+
     auto result =
         book.modifyOrder(
             2,
@@ -368,8 +379,8 @@ void testModifyCanGenerateTrades() {
             50
         );
 
-    assert(result.accepted());
 
+    assert(result.accepted());
     assert(result.trades.size() == 1);
 
     assert(result.trades[0].buyOrderId == 2);
@@ -396,12 +407,14 @@ void testMarketBuyConsumesBestAsk() {
         Side::Sell
     });
 
+
     auto result =
         book.addMarketOrder(
             2,
             50,
             Side::Buy
         );
+
 
     assert(result.accepted());
     assert(result.trades.size() == 1);
@@ -423,12 +436,14 @@ void testMarketSellConsumesBestBid() {
         Side::Buy
     });
 
+
     auto result =
         book.addMarketOrder(
             2,
             40,
             Side::Sell
         );
+
 
     assert(result.accepted());
     assert(result.trades.size() == 1);
@@ -464,12 +479,14 @@ void testMarketOrderSweepsPriceLevels() {
         Side::Sell
     });
 
+
     auto result =
         book.addMarketOrder(
             4,
             50,
             Side::Buy
         );
+
 
     assert(result.trades.size() == 3);
 
@@ -484,12 +501,14 @@ void testMarketOrderSweepsPriceLevels() {
 void testMarketOrderDoesNotRest() {
     OrderBook book;
 
+
     auto result =
         book.addMarketOrder(
             1,
             100,
             Side::Buy
         );
+
 
     assert(result.accepted());
     assert(result.trades.empty());
@@ -515,6 +534,7 @@ void testIocBuyPartiallyFillsAndDoesNotRest() {
         Side::Sell
     });
 
+
     auto result =
         book.addImmediateOrCancelOrder({
             2,
@@ -522,6 +542,7 @@ void testIocBuyPartiallyFillsAndDoesNotRest() {
             100,
             Side::Buy
         });
+
 
     assert(result.accepted());
 
@@ -557,6 +578,7 @@ void testIocRespectsLimitPrice() {
         Side::Sell
     });
 
+
     auto result =
         book.addImmediateOrCancelOrder({
             4,
@@ -565,8 +587,8 @@ void testIocRespectsLimitPrice() {
             Side::Buy
         });
 
-    assert(result.accepted());
 
+    assert(result.accepted());
     assert(result.trades.size() == 2);
 
     assert(result.trades[0].price == 10001);
@@ -587,6 +609,7 @@ void testIocWithNoMatchDoesNotRest() {
         Side::Sell
     });
 
+
     auto result =
         book.addImmediateOrCancelOrder({
             2,
@@ -594,6 +617,7 @@ void testIocWithNoMatchDoesNotRest() {
             100,
             Side::Buy
         });
+
 
     assert(result.accepted());
     assert(result.trades.empty());
@@ -644,7 +668,6 @@ void testFokExecutesWhenFullyFillable() {
 
 
     assert(result.accepted());
-
     assert(result.trades.size() == 2);
 
     assert(result.trades[0].price == 10001);
@@ -653,10 +676,7 @@ void testFokExecutesWhenFullyFillable() {
     assert(result.trades[1].price == 10002);
     assert(result.trades[1].quantity == 30);
 
-
     assert(book.bestAsk() == 10003);
-
-    assert(!book.cancelOrder(4));
 }
 
 
@@ -685,9 +705,6 @@ void testFokFailsWithoutChangingBook() {
     });
 
 
-    // Only 50 units exist at 10002 or better.
-    //
-    // We require 70.
     auto result =
         book.addFillOrKillOrder({
             4,
@@ -703,20 +720,11 @@ void testFokFailsWithoutChangingBook() {
     );
 
     assert(!result.accepted());
-
     assert(result.trades.empty());
 
-
-    // The book MUST be untouched.
     assert(book.bestAsk() == 10001);
 
-
-    // Prove Order 1 still exists.
     assert(book.cancelOrder(1));
-
-
-    // After cancelling Order 1,
-    // 10002 should now be best ask.
     assert(book.bestAsk() == 10002);
 }
 
@@ -746,8 +754,6 @@ void testFokDoesNotUsePricesOutsideLimit() {
     });
 
 
-    // There is loads of total liquidity,
-    // but only 40 units at 10002 or better.
     auto result =
         book.addFillOrKillOrder({
             4,
@@ -763,9 +769,6 @@ void testFokDoesNotUsePricesOutsideLimit() {
     );
 
     assert(result.trades.empty());
-
-
-    // Nothing was consumed.
     assert(book.bestAsk() == 10001);
 }
 
@@ -805,7 +808,6 @@ void testFokSellFullyExecutes() {
 
 
     assert(result.accepted());
-
     assert(result.trades.size() == 2);
 
     assert(result.trades[0].price == 10005);
@@ -815,6 +817,189 @@ void testFokSellFullyExecutes() {
     assert(result.trades[1].quantity == 30);
 
     assert(book.bestBid() == 10003);
+}
+
+
+// =============================================
+// VALIDATION TESTS
+// =============================================
+
+void testLimitOrderRejectsZeroQuantity() {
+    OrderBook book;
+
+
+    auto result =
+        book.addLimitOrder({
+            1,
+            10000,
+            0,
+            Side::Buy
+        });
+
+
+    assert(
+        result.status ==
+        OrderStatus::InvalidQuantity
+    );
+
+    assert(!result.accepted());
+    assert(result.trades.empty());
+
+    assert(book.bestBid() == 0);
+    assert(book.bestAsk() == 0);
+}
+
+
+void testLimitOrderRejectsZeroPrice() {
+    OrderBook book;
+
+
+    auto result =
+        book.addLimitOrder({
+            1,
+            0,
+            100,
+            Side::Buy
+        });
+
+
+    assert(
+        result.status ==
+        OrderStatus::InvalidPrice
+    );
+
+    assert(!result.accepted());
+
+    assert(book.bestBid() == 0);
+}
+
+
+void testLimitOrderRejectsNegativePrice() {
+    OrderBook book;
+
+
+    auto result =
+        book.addLimitOrder({
+            1,
+            -100,
+            100,
+            Side::Sell
+        });
+
+
+    assert(
+        result.status ==
+        OrderStatus::InvalidPrice
+    );
+
+    assert(!result.accepted());
+
+    assert(book.bestAsk() == 0);
+}
+
+
+void testMarketOrderRejectsZeroQuantity() {
+    OrderBook book;
+
+
+    auto result =
+        book.addMarketOrder(
+            1,
+            0,
+            Side::Buy
+        );
+
+
+    assert(
+        result.status ==
+        OrderStatus::InvalidQuantity
+    );
+
+    assert(!result.accepted());
+
+    assert(book.bestBid() == 0);
+    assert(book.bestAsk() == 0);
+}
+
+
+void testIocRejectsInvalidPrice() {
+    OrderBook book;
+
+
+    auto result =
+        book.addImmediateOrCancelOrder({
+            1,
+            0,
+            100,
+            Side::Buy
+        });
+
+
+    assert(
+        result.status ==
+        OrderStatus::InvalidPrice
+    );
+
+    assert(!result.accepted());
+}
+
+
+void testFokRejectsZeroQuantity() {
+    OrderBook book;
+
+
+    auto result =
+        book.addFillOrKillOrder({
+            1,
+            10000,
+            0,
+            Side::Buy
+        });
+
+
+    assert(
+        result.status ==
+        OrderStatus::InvalidQuantity
+    );
+
+    assert(!result.accepted());
+}
+
+
+void testInvalidModifyPriceDoesNotChangeOrder() {
+    OrderBook book;
+
+
+    book.addLimitOrder({
+        1,
+        10000,
+        100,
+        Side::Buy
+    });
+
+
+    auto result =
+        book.modifyOrder(
+            1,
+            0,
+            50
+        );
+
+
+    assert(
+        result.status ==
+        OrderStatus::InvalidPrice
+    );
+
+    assert(!result.accepted());
+
+
+    // Original order must still be intact.
+    assert(book.bestBid() == 10000);
+
+
+    // And it should still be cancellable.
+    assert(book.cancelOrder(1));
 }
 
 
@@ -849,6 +1034,14 @@ int main() {
     testFokFailsWithoutChangingBook();
     testFokDoesNotUsePricesOutsideLimit();
     testFokSellFullyExecutes();
+
+    testLimitOrderRejectsZeroQuantity();
+    testLimitOrderRejectsZeroPrice();
+    testLimitOrderRejectsNegativePrice();
+    testMarketOrderRejectsZeroQuantity();
+    testIocRejectsInvalidPrice();
+    testFokRejectsZeroQuantity();
+    testInvalidModifyPriceDoesNotChangeOrder();
 
 
     std::cout

@@ -206,8 +206,38 @@ void testCancelOneOrderAtSharedPriceLevel() {
     bool cancelled = book.cancelOrder(1);
 
     assert(cancelled);
-
     assert(book.bestBid() == 10000);
+}
+
+
+void testDuplicateOrderIdRejected() {
+    OrderBook book;
+
+    book.addLimitOrder({
+        1,
+        10000,
+        100,
+        Side::Buy
+    });
+
+    auto trades = book.addLimitOrder({
+        1,
+        11000,
+        100,
+        Side::Buy
+    });
+
+    // Duplicate should not execute anything.
+    assert(trades.empty());
+
+    // Original order must remain untouched.
+    assert(book.bestBid() == 10000);
+
+    // The original Order 1 should still be cancellable.
+    bool cancelled = book.cancelOrder(1);
+
+    assert(cancelled);
+    assert(book.bestBid() == 0);
 }
 
 
@@ -220,6 +250,7 @@ int main() {
     testCancelExistingOrder();
     testCancelNonexistentOrder();
     testCancelOneOrderAtSharedPriceLevel();
+    testDuplicateOrderIdRejected();
 
     std::cout << "All order book tests passed.\n";
 

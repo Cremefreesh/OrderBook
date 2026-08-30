@@ -26,6 +26,15 @@ Price OrderBook::bestAsk() const {
 std::vector<Trade> OrderBook::addLimitOrder(Order order) {
     std::vector<Trade> trades;
 
+    // -------------------------------------------------
+    // Reject duplicate active OrderIds
+    // -------------------------------------------------
+
+    if (orderIndex_.find(order.id) != orderIndex_.end()) {
+        return trades;
+    }
+
+
     // =========================
     // BUY ORDER
     // =========================

@@ -23,8 +23,12 @@ Price OrderBook::bestAsk() const {
 }
 
 
-std::vector<Trade> OrderBook::addLimitOrder(Order order) {
-    std::vector<Trade> trades;
+OrderResult OrderBook::addLimitOrder(Order order) {
+
+    OrderResult result {
+        OrderStatus::Accepted,
+        {}
+    };
 
 
     // -----------------------------------------
@@ -32,7 +36,11 @@ std::vector<Trade> OrderBook::addLimitOrder(Order order) {
     // -----------------------------------------
 
     if (orderIndex_.find(order.id) != orderIndex_.end()) {
-        return trades;
+
+        result.status =
+            OrderStatus::DuplicateOrderId;
+
+        return result;
     }
 
 
@@ -47,13 +55,13 @@ std::vector<Trade> OrderBook::addLimitOrder(Order order) {
             !asks_.empty()
         ) {
 
-            auto bestAskIt = asks_.begin();
+            auto bestAskIt =
+                asks_.begin();
 
             Price bestAskPrice =
                 bestAskIt->first;
 
 
-            // No price overlap.
             if (order.price < bestAskPrice) {
                 break;
             }
@@ -63,7 +71,6 @@ std::vector<Trade> OrderBook::addLimitOrder(Order order) {
                 bestAskIt->second;
 
 
-            // Match FIFO within this price level.
             while (
                 order.quantity > 0 &&
                 !level.orders.empty()
@@ -88,14 +95,16 @@ std::vector<Trade> OrderBook::addLimitOrder(Order order) {
                 };
 
 
-                trades.push_back(trade);
+                result.trades.push_back(trade);
 
 
-                order.quantity -= tradedQuantity;
-                restingOrder.quantity -= tradedQuantity;
+                order.quantity -=
+                    tradedQuantity;
+
+                restingOrder.quantity -=
+                    tradedQuantity;
 
 
-                // Resting order completely filled.
                 if (restingOrder.quantity == 0) {
 
                     orderIndex_.erase(
@@ -107,7 +116,6 @@ std::vector<Trade> OrderBook::addLimitOrder(Order order) {
             }
 
 
-            // Remove empty price level.
             if (level.orders.empty()) {
                 asks_.erase(bestAskIt);
             }
@@ -124,7 +132,6 @@ std::vector<Trade> OrderBook::addLimitOrder(Order order) {
                 bids_.find(order.price);
 
 
-            // Price level doesn't exist.
             if (levelIt == bids_.end()) {
 
                 PriceLevel level {
@@ -162,7 +169,6 @@ std::vector<Trade> OrderBook::addLimitOrder(Order order) {
                 };
             }
 
-            // Price level already exists.
             else {
 
                 levelIt
@@ -204,12 +210,10 @@ std::vector<Trade> OrderBook::addLimitOrder(Order order) {
             auto bestBidIt =
                 bids_.begin();
 
-
             Price bestBidPrice =
                 bestBidIt->first;
 
 
-            // No price overlap.
             if (order.price > bestBidPrice) {
                 break;
             }
@@ -219,7 +223,6 @@ std::vector<Trade> OrderBook::addLimitOrder(Order order) {
                 bestBidIt->second;
 
 
-            // Match FIFO within this price level.
             while (
                 order.quantity > 0 &&
                 !level.orders.empty()
@@ -244,14 +247,16 @@ std::vector<Trade> OrderBook::addLimitOrder(Order order) {
                 };
 
 
-                trades.push_back(trade);
+                result.trades.push_back(trade);
 
 
-                order.quantity -= tradedQuantity;
-                restingOrder.quantity -= tradedQuantity;
+                order.quantity -=
+                    tradedQuantity;
+
+                restingOrder.quantity -=
+                    tradedQuantity;
 
 
-                // Resting order completely filled.
                 if (restingOrder.quantity == 0) {
 
                     orderIndex_.erase(
@@ -263,7 +268,6 @@ std::vector<Trade> OrderBook::addLimitOrder(Order order) {
             }
 
 
-            // Remove empty price level.
             if (level.orders.empty()) {
                 bids_.erase(bestBidIt);
             }
@@ -280,7 +284,6 @@ std::vector<Trade> OrderBook::addLimitOrder(Order order) {
                 asks_.find(order.price);
 
 
-            // Price level doesn't exist.
             if (levelIt == asks_.end()) {
 
                 PriceLevel level {
@@ -318,7 +321,6 @@ std::vector<Trade> OrderBook::addLimitOrder(Order order) {
                 };
             }
 
-            // Price level already exists.
             else {
 
                 levelIt
@@ -346,7 +348,7 @@ std::vector<Trade> OrderBook::addLimitOrder(Order order) {
     }
 
 
-    return trades;
+    return result;
 }
 
 
@@ -356,7 +358,6 @@ bool OrderBook::cancelOrder(OrderId id) {
         orderIndex_.find(id);
 
 
-    // Order doesn't exist.
     if (indexIt == orderIndex_.end()) {
         return false;
     }
@@ -387,7 +388,6 @@ bool OrderBook::cancelOrder(OrderId id) {
             .erase(location.orderIt);
 
 
-        // Remove price level if now empty.
         if (
             levelIt
                 ->second
@@ -421,7 +421,6 @@ bool OrderBook::cancelOrder(OrderId id) {
             .erase(location.orderIt);
 
 
-        // Remove price level if now empty.
         if (
             levelIt
                 ->second
@@ -441,22 +440,26 @@ bool OrderBook::cancelOrder(OrderId id) {
 }
 
 
-bool OrderBook::modifyOrder(
+OrderResult OrderBook::modifyOrder(
     OrderId id,
     Price newPrice,
     Quantity newQuantity
 ) {
 
-    // -----------------------------------------
-    // Find existing order
-    // -----------------------------------------
-
     auto indexIt =
         orderIndex_.find(id);
 
 
+    // -----------------------------------------
+    // Order doesn't exist
+    // -----------------------------------------
+
     if (indexIt == orderIndex_.end()) {
-        return false;
+
+        return {
+            OrderStatus::OrderNotFound,
+            {}
+        };
     }
 
 
@@ -469,19 +472,24 @@ bool OrderBook::modifyOrder(
 
 
     // -----------------------------------------
-    // Quantity = 0 behaves like cancellation
+    // Quantity zero = cancellation
     // -----------------------------------------
 
     if (newQuantity == 0) {
 
-        return cancelOrder(id);
+        cancelOrder(id);
+
+        return {
+            OrderStatus::Accepted,
+            {}
+        };
     }
 
 
     // -----------------------------------------
-    // SAME PRICE + QUANTITY DECREASE
+    // Same price + quantity decrease
     //
-    // Keep queue priority.
+    // Keep priority.
     // -----------------------------------------
 
     if (
@@ -492,35 +500,36 @@ bool OrderBook::modifyOrder(
         existingOrder.quantity =
             newQuantity;
 
-        return true;
+        return {
+            OrderStatus::Accepted,
+            {}
+        };
     }
 
 
     // -----------------------------------------
-    // Otherwise priority is lost.
+    // Price change OR quantity increase
     //
-    // This includes:
-    //
-    // 1. price change
-    // 2. quantity increase
+    // Lose priority.
     // -----------------------------------------
-
 
     Side side =
         existingOrder.side;
 
 
-    // Remove old order from the book.
     bool cancelled =
         cancelOrder(id);
 
 
     if (!cancelled) {
-        return false;
+
+        return {
+            OrderStatus::OrderNotFound,
+            {}
+        };
     }
 
 
-    // Create replacement order.
     Order replacement {
         id,
         newPrice,
@@ -529,13 +538,11 @@ bool OrderBook::modifyOrder(
     };
 
 
-    // Reinsert it.
+    // This is important:
     //
-    // Because push_back is used when an order
-    // rests, it goes to the back of the FIFO
-    // queue and therefore loses time priority.
-    addLimitOrder(replacement);
-
-
-    return true;
+    // addLimitOrder() might produce trades.
+    //
+    // We now RETURN those trades instead of
+    // silently throwing them away.
+    return addLimitOrder(replacement);
 }

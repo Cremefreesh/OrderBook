@@ -8,10 +8,6 @@ int main() {
     OrderBook book;
 
 
-    // ---------------------------------
-    // Add initial resting BUY
-    // ---------------------------------
-
     book.addLimitOrder({
         1,
         10000,
@@ -19,10 +15,6 @@ int main() {
         Side::Buy
     });
 
-
-    // ---------------------------------
-    // Add initial resting SELL
-    // ---------------------------------
 
     book.addLimitOrder({
         2,
@@ -45,23 +37,16 @@ int main() {
         << '\n';
 
 
-    // ---------------------------------
-    // Submit crossing BUY
-    // ---------------------------------
-
-    auto trades = book.addLimitOrder({
-        3,
-        10005,
-        100,
-        Side::Buy
-    });
+    OrderResult result =
+        book.addLimitOrder({
+            3,
+            10005,
+            100,
+            Side::Buy
+        });
 
 
-    // ---------------------------------
-    // Print resulting trades
-    // ---------------------------------
-
-    for (const Trade& trade : trades) {
+    for (const Trade& trade : result.trades) {
 
         std::cout
             << "Trade: buy="
@@ -93,11 +78,8 @@ int main() {
         << '\n';
 
 
-    // ---------------------------------
-    // Cancel remaining Order 3
-    // ---------------------------------
-
-    bool cancelled = book.cancelOrder(3);
+    bool cancelled =
+        book.cancelOrder(3);
 
 
     std::cout
@@ -109,18 +91,6 @@ int main() {
     std::cout
         << "Best bid after cancel: "
         << book.bestBid()
-        << '\n';
-
-
-    // ---------------------------------
-    // Try cancelling it again
-    // ---------------------------------
-
-    bool cancelledAgain = book.cancelOrder(3);
-
-    std::cout
-        << "Cancel order 3 again: "
-        << (cancelledAgain ? "success" : "failed")
         << '\n';
 
 

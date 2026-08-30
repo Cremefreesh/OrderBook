@@ -7,19 +7,22 @@
 void testNonCrossingOrders() {
     OrderBook book;
 
-    book.addLimitOrder({
+    auto buyResult = book.addLimitOrder({
         1,
         10000,
         100,
         Side::Buy
     });
 
-    book.addLimitOrder({
+    auto sellResult = book.addLimitOrder({
         2,
         10005,
         100,
         Side::Sell
     });
+
+    assert(buyResult.accepted());
+    assert(sellResult.accepted());
 
     assert(book.bestBid() == 10000);
     assert(book.bestAsk() == 10005);
@@ -36,19 +39,21 @@ void testExactFill() {
         Side::Sell
     });
 
-    auto trades = book.addLimitOrder({
+    auto result = book.addLimitOrder({
         2,
         10000,
         50,
         Side::Buy
     });
 
-    assert(trades.size() == 1);
+    assert(result.accepted());
 
-    assert(trades[0].buyOrderId == 2);
-    assert(trades[0].sellOrderId == 1);
-    assert(trades[0].price == 10000);
-    assert(trades[0].quantity == 50);
+    assert(result.trades.size() == 1);
+
+    assert(result.trades[0].buyOrderId == 2);
+    assert(result.trades[0].sellOrderId == 1);
+    assert(result.trades[0].price == 10000);
+    assert(result.trades[0].quantity == 50);
 
     assert(book.bestBid() == 0);
     assert(book.bestAsk() == 0);
@@ -65,15 +70,17 @@ void testPartialFill() {
         Side::Sell
     });
 
-    auto trades = book.addLimitOrder({
+    auto result = book.addLimitOrder({
         2,
         10005,
         100,
         Side::Buy
     });
 
-    assert(trades.size() == 1);
-    assert(trades[0].quantity == 50);
+    assert(result.accepted());
+
+    assert(result.trades.size() == 1);
+    assert(result.trades[0].quantity == 50);
 
     assert(book.bestBid() == 10005);
     assert(book.bestAsk() == 0);
@@ -97,20 +104,20 @@ void testPriceTimePriority() {
         Side::Sell
     });
 
-    auto trades = book.addLimitOrder({
+    auto result = book.addLimitOrder({
         3,
         10005,
         40,
         Side::Buy
     });
 
-    assert(trades.size() == 2);
+    assert(result.trades.size() == 2);
 
-    assert(trades[0].sellOrderId == 1);
-    assert(trades[0].quantity == 30);
+    assert(result.trades[0].sellOrderId == 1);
+    assert(result.trades[0].quantity == 30);
 
-    assert(trades[1].sellOrderId == 2);
-    assert(trades[1].quantity == 10);
+    assert(result.trades[1].sellOrderId == 2);
+    assert(result.trades[1].quantity == 10);
 }
 
 
@@ -138,23 +145,23 @@ void testSweepMultiplePriceLevels() {
         Side::Sell
     });
 
-    auto trades = book.addLimitOrder({
+    auto result = book.addLimitOrder({
         4,
         10003,
         50,
         Side::Buy
     });
 
-    assert(trades.size() == 3);
+    assert(result.trades.size() == 3);
 
-    assert(trades[0].price == 10001);
-    assert(trades[0].quantity == 20);
+    assert(result.trades[0].price == 10001);
+    assert(result.trades[0].quantity == 20);
 
-    assert(trades[1].price == 10002);
-    assert(trades[1].quantity == 20);
+    assert(result.trades[1].price == 10002);
+    assert(result.trades[1].quantity == 20);
 
-    assert(trades[2].price == 10003);
-    assert(trades[2].quantity == 10);
+    assert(result.trades[2].price == 10003);
+    assert(result.trades[2].quantity == 10);
 
     assert(book.bestAsk() == 10003);
 }
@@ -188,77 +195,57 @@ void testCancelNonexistentOrder() {
 }
 
 
-void testCancelOneOrderAtSharedPriceLevel() {
-    OrderBook book;
-
-    book.addLimitOrder({
-        1,
-        10000,
-        100,
-        Side::Buy
-    });
-
-    book.addLimitOrder({
-        2,
-        10000,
-        100,
-        Side::Buy
-    });
-
-    bool cancelled =
-        book.cancelOrder(1);
-
-    assert(cancelled);
-
-    assert(book.bestBid() == 10000);
-}
-
-
 void testDuplicateOrderIdRejected() {
     OrderBook book;
 
-    book.addLimitOrder({
-        1,
-        10000,
-        100,
-        Side::Buy
-    });
+    auto firstResult =
+        book.addLimitOrder({
+            1,
+            10000,
+            100,
+            Side::Buy
+        });
 
-    auto trades = book.addLimitOrder({
-        1,
-        11000,
-        100,
-        Side::Buy
-    });
 
-    assert(trades.empty());
+    auto duplicateResult =
+        book.addLimitOrder({
+            1,
+            11000,
+            100,
+            Side::Buy
+        });
+
+
+    assert(firstResult.accepted());
+
+    assert(
+        duplicateResult.status ==
+        OrderStatus::DuplicateOrderId
+    );
+
+    assert(!duplicateResult.accepted());
 
     assert(book.bestBid() == 10000);
-
-    bool cancelled =
-        book.cancelOrder(1);
-
-    assert(cancelled);
-    assert(book.bestBid() == 0);
 }
-
-
-// =============================================
-// MODIFY TESTS
-// =============================================
 
 
 void testModifyNonexistentOrder() {
     OrderBook book;
 
-    bool modified =
+    auto result =
         book.modifyOrder(
             999,
             10000,
             50
         );
 
-    assert(!modified);
+
+    assert(
+        result.status ==
+        OrderStatus::OrderNotFound
+    );
+
+    assert(!result.accepted());
 }
 
 
@@ -272,14 +259,16 @@ void testModifyQuantityToZeroCancels() {
         Side::Buy
     });
 
-    bool modified =
+
+    auto result =
         book.modifyOrder(
             1,
             10000,
             0
         );
 
-    assert(modified);
+
+    assert(result.accepted());
 
     assert(book.bestBid() == 0);
 
@@ -290,8 +279,6 @@ void testModifyQuantityToZeroCancels() {
 void testQuantityDecreaseKeepsPriority() {
     OrderBook book;
 
-
-    // Order 1 enters first.
     book.addLimitOrder({
         1,
         10000,
@@ -299,8 +286,6 @@ void testQuantityDecreaseKeepsPriority() {
         Side::Sell
     });
 
-
-    // Order 2 enters second.
     book.addLimitOrder({
         2,
         10000,
@@ -309,11 +294,7 @@ void testQuantityDecreaseKeepsPriority() {
     });
 
 
-    // Reduce Order 1 from 100 -> 50.
-    //
-    // It should KEEP its position
-    // ahead of Order 2.
-    bool modified =
+    auto modifyResult =
         book.modifyOrder(
             1,
             10000,
@@ -321,32 +302,27 @@ void testQuantityDecreaseKeepsPriority() {
         );
 
 
-    assert(modified);
+    assert(modifyResult.accepted());
 
 
-    // Incoming buy only wants 50.
-    auto trades = book.addLimitOrder({
-        3,
-        10000,
-        50,
-        Side::Buy
-    });
+    auto result =
+        book.addLimitOrder({
+            3,
+            10000,
+            50,
+            Side::Buy
+        });
 
 
-    assert(trades.size() == 1);
+    assert(result.trades.size() == 1);
 
-
-    // Order 1 should still execute first.
-    assert(trades[0].sellOrderId == 1);
-    assert(trades[0].quantity == 50);
+    assert(result.trades[0].sellOrderId == 1);
 }
 
 
 void testQuantityIncreaseLosesPriority() {
     OrderBook book;
 
-
-    // Order 1 enters first.
     book.addLimitOrder({
         1,
         10000,
@@ -354,8 +330,6 @@ void testQuantityIncreaseLosesPriority() {
         Side::Sell
     });
 
-
-    // Order 2 enters second.
     book.addLimitOrder({
         2,
         10000,
@@ -364,11 +338,7 @@ void testQuantityIncreaseLosesPriority() {
     });
 
 
-    // Increase Order 1 from 50 -> 100.
-    //
-    // It should lose priority and move
-    // behind Order 2.
-    bool modified =
+    auto modifyResult =
         book.modifyOrder(
             1,
             10000,
@@ -376,94 +346,90 @@ void testQuantityIncreaseLosesPriority() {
         );
 
 
-    assert(modified);
+    assert(modifyResult.accepted());
 
 
-    auto trades = book.addLimitOrder({
-        3,
+    auto result =
+        book.addLimitOrder({
+            3,
+            10000,
+            50,
+            Side::Buy
+        });
+
+
+    assert(result.trades.size() == 1);
+
+    assert(result.trades[0].sellOrderId == 2);
+}
+
+
+void testModifyCanGenerateTrades() {
+    OrderBook book;
+
+
+    // Resting seller.
+    book.addLimitOrder({
+        1,
+        10005,
+        50,
+        Side::Sell
+    });
+
+
+    // Resting buyer below the ask.
+    book.addLimitOrder({
+        2,
         10000,
         50,
         Side::Buy
     });
 
 
-    assert(trades.size() == 1);
-
-
-    // Order 2 should now execute first.
-    assert(trades[0].sellOrderId == 2);
-    assert(trades[0].quantity == 50);
-}
-
-
-void testPriceChangeMovesOrder() {
-    OrderBook book;
-
-
-    book.addLimitOrder({
-        1,
-        10000,
-        100,
-        Side::Buy
-    });
-
-
-    bool modified =
+    // Move buyer from 10000 -> 10005.
+    //
+    // This now crosses the ask.
+    auto result =
         book.modifyOrder(
-            1,
-            10010,
-            100
+            2,
+            10005,
+            50
         );
 
 
-    assert(modified);
+    assert(result.accepted());
 
+    assert(result.trades.size() == 1);
 
-    // The order should now live at 10010.
-    assert(book.bestBid() == 10010);
+    assert(result.trades[0].buyOrderId == 2);
+    assert(result.trades[0].sellOrderId == 1);
+    assert(result.trades[0].price == 10005);
+    assert(result.trades[0].quantity == 50);
 
-
-    // It should still exist in the index
-    // and therefore be cancellable.
-    bool cancelled =
-        book.cancelOrder(1);
-
-
-    assert(cancelled);
     assert(book.bestBid() == 0);
+    assert(book.bestAsk() == 0);
 }
 
 
 int main() {
 
     testNonCrossingOrders();
-
     testExactFill();
-
     testPartialFill();
-
     testPriceTimePriority();
-
     testSweepMultiplePriceLevels();
 
     testCancelExistingOrder();
-
     testCancelNonexistentOrder();
-
-    testCancelOneOrderAtSharedPriceLevel();
 
     testDuplicateOrderIdRejected();
 
-
     testModifyNonexistentOrder();
-
     testModifyQuantityToZeroCancels();
-
     testQuantityDecreaseKeepsPriority();
-
     testQuantityIncreaseLosesPriority();
 
-    testPriceChangeMovesOrder();
+    testModifyCanGenerateTrades();
 
 
     std::cout

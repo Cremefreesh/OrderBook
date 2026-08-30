@@ -4,20 +4,19 @@
 #include <list>
 #include <map>
 #include <unordered_map>
-#include <vector>
 
 #include "order.hpp"
+#include "order_result.hpp"
 #include "price_level.hpp"
-#include "trade.hpp"
 
 
 class OrderBook {
 public:
-    std::vector<Trade> addLimitOrder(Order order);
+    OrderResult addLimitOrder(Order order);
 
     bool cancelOrder(OrderId id);
 
-    bool modifyOrder(
+    OrderResult modifyOrder(
         OrderId id,
         Price newPrice,
         Quantity newQuantity

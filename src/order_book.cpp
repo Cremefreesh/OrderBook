@@ -23,6 +23,200 @@ Price OrderBook::bestAsk() const {
 }
 
 
+// =============================================
+// MATCH INCOMING BUY
+// =============================================
+
+void OrderBook::matchBuy(
+    OrderId incomingId,
+    Quantity& remainingQuantity,
+    Price limitPrice,
+    bool isMarketOrder,
+    OrderResult& result
+) {
+
+    while (
+        remainingQuantity > 0 &&
+        !asks_.empty()
+    ) {
+
+        auto bestAskIt =
+            asks_.begin();
+
+
+        Price bestAskPrice =
+            bestAskIt->first;
+
+
+        // Limit orders must respect their price.
+        //
+        // Market orders ignore this check.
+        if (
+            !isMarketOrder &&
+            limitPrice < bestAskPrice
+        ) {
+            break;
+        }
+
+
+        PriceLevel& level =
+            bestAskIt->second;
+
+
+        // FIFO matching within this price level.
+        while (
+            remainingQuantity > 0 &&
+            !level.orders.empty()
+        ) {
+
+            Order& restingOrder =
+                level.orders.front();
+
+
+            Quantity tradedQuantity =
+                std::min(
+                    remainingQuantity,
+                    restingOrder.quantity
+                );
+
+
+            Trade trade {
+                incomingId,
+                restingOrder.id,
+                restingOrder.price,
+                tradedQuantity
+            };
+
+
+            result.trades.push_back(trade);
+
+
+            remainingQuantity -=
+                tradedQuantity;
+
+            restingOrder.quantity -=
+                tradedQuantity;
+
+
+            // Resting order fully filled.
+            if (restingOrder.quantity == 0) {
+
+                orderIndex_.erase(
+                    restingOrder.id
+                );
+
+                level.orders.pop_front();
+            }
+        }
+
+
+        // Entire ask level consumed.
+        if (level.orders.empty()) {
+            asks_.erase(bestAskIt);
+        }
+    }
+}
+
+
+// =============================================
+// MATCH INCOMING SELL
+// =============================================
+
+void OrderBook::matchSell(
+    OrderId incomingId,
+    Quantity& remainingQuantity,
+    Price limitPrice,
+    bool isMarketOrder,
+    OrderResult& result
+) {
+
+    while (
+        remainingQuantity > 0 &&
+        !bids_.empty()
+    ) {
+
+        auto bestBidIt =
+            bids_.begin();
+
+
+        Price bestBidPrice =
+            bestBidIt->first;
+
+
+        // Limit orders must respect their price.
+        //
+        // Market orders ignore this check.
+        if (
+            !isMarketOrder &&
+            limitPrice > bestBidPrice
+        ) {
+            break;
+        }
+
+
+        PriceLevel& level =
+            bestBidIt->second;
+
+
+        // FIFO matching within this price level.
+        while (
+            remainingQuantity > 0 &&
+            !level.orders.empty()
+        ) {
+
+            Order& restingOrder =
+                level.orders.front();
+
+
+            Quantity tradedQuantity =
+                std::min(
+                    remainingQuantity,
+                    restingOrder.quantity
+                );
+
+
+            Trade trade {
+                restingOrder.id,
+                incomingId,
+                restingOrder.price,
+                tradedQuantity
+            };
+
+
+            result.trades.push_back(trade);
+
+
+            remainingQuantity -=
+                tradedQuantity;
+
+            restingOrder.quantity -=
+                tradedQuantity;
+
+
+            // Resting order fully filled.
+            if (restingOrder.quantity == 0) {
+
+                orderIndex_.erase(
+                    restingOrder.id
+                );
+
+                level.orders.pop_front();
+            }
+        }
+
+
+        // Entire bid level consumed.
+        if (level.orders.empty()) {
+            bids_.erase(bestBidIt);
+        }
+    }
+}
+
+
+// =============================================
+// ADD LIMIT ORDER
+// =============================================
+
 OrderResult OrderBook::addLimitOrder(Order order) {
 
     OrderResult result {
@@ -31,10 +225,7 @@ OrderResult OrderBook::addLimitOrder(Order order) {
     };
 
 
-    // -----------------------------------------
-    // Reject duplicate active OrderIds
-    // -----------------------------------------
-
+    // Reject duplicate active OrderIds.
     if (orderIndex_.find(order.id) != orderIndex_.end()) {
 
         result.status =
@@ -50,83 +241,16 @@ OrderResult OrderBook::addLimitOrder(Order order) {
 
     if (order.side == Side::Buy) {
 
-        while (
-            order.quantity > 0 &&
-            !asks_.empty()
-        ) {
-
-            auto bestAskIt =
-                asks_.begin();
-
-            Price bestAskPrice =
-                bestAskIt->first;
+        matchBuy(
+            order.id,
+            order.quantity,
+            order.price,
+            false,
+            result
+        );
 
 
-            // Limit price does not cross.
-            if (order.price < bestAskPrice) {
-                break;
-            }
-
-
-            PriceLevel& level =
-                bestAskIt->second;
-
-
-            while (
-                order.quantity > 0 &&
-                !level.orders.empty()
-            ) {
-
-                Order& restingOrder =
-                    level.orders.front();
-
-
-                Quantity tradedQuantity =
-                    std::min(
-                        order.quantity,
-                        restingOrder.quantity
-                    );
-
-
-                Trade trade {
-                    order.id,
-                    restingOrder.id,
-                    restingOrder.price,
-                    tradedQuantity
-                };
-
-
-                result.trades.push_back(trade);
-
-
-                order.quantity -=
-                    tradedQuantity;
-
-                restingOrder.quantity -=
-                    tradedQuantity;
-
-
-                if (restingOrder.quantity == 0) {
-
-                    orderIndex_.erase(
-                        restingOrder.id
-                    );
-
-                    level.orders.pop_front();
-                }
-            }
-
-
-            if (level.orders.empty()) {
-                asks_.erase(bestAskIt);
-            }
-        }
-
-
-        // -----------------------------------------
-        // Rest remaining BUY quantity
-        // -----------------------------------------
-
+        // Rest any unfilled quantity.
         if (order.quantity > 0) {
 
             auto levelIt =
@@ -203,83 +327,16 @@ OrderResult OrderBook::addLimitOrder(Order order) {
 
     else {
 
-        while (
-            order.quantity > 0 &&
-            !bids_.empty()
-        ) {
-
-            auto bestBidIt =
-                bids_.begin();
-
-            Price bestBidPrice =
-                bestBidIt->first;
+        matchSell(
+            order.id,
+            order.quantity,
+            order.price,
+            false,
+            result
+        );
 
 
-            // Limit price does not cross.
-            if (order.price > bestBidPrice) {
-                break;
-            }
-
-
-            PriceLevel& level =
-                bestBidIt->second;
-
-
-            while (
-                order.quantity > 0 &&
-                !level.orders.empty()
-            ) {
-
-                Order& restingOrder =
-                    level.orders.front();
-
-
-                Quantity tradedQuantity =
-                    std::min(
-                        order.quantity,
-                        restingOrder.quantity
-                    );
-
-
-                Trade trade {
-                    restingOrder.id,
-                    order.id,
-                    restingOrder.price,
-                    tradedQuantity
-                };
-
-
-                result.trades.push_back(trade);
-
-
-                order.quantity -=
-                    tradedQuantity;
-
-                restingOrder.quantity -=
-                    tradedQuantity;
-
-
-                if (restingOrder.quantity == 0) {
-
-                    orderIndex_.erase(
-                        restingOrder.id
-                    );
-
-                    level.orders.pop_front();
-                }
-            }
-
-
-            if (level.orders.empty()) {
-                bids_.erase(bestBidIt);
-            }
-        }
-
-
-        // -----------------------------------------
-        // Rest remaining SELL quantity
-        // -----------------------------------------
-
+        // Rest any unfilled quantity.
         if (order.quantity > 0) {
 
             auto levelIt =
@@ -354,6 +411,10 @@ OrderResult OrderBook::addLimitOrder(Order order) {
 }
 
 
+// =============================================
+// ADD MARKET ORDER
+// =============================================
+
 OrderResult OrderBook::addMarketOrder(
     OrderId id,
     Quantity quantity,
@@ -366,10 +427,7 @@ OrderResult OrderBook::addMarketOrder(
     };
 
 
-    // -----------------------------------------
-    // Reject duplicate active OrderIds
-    // -----------------------------------------
-
+    // Reject duplicate active OrderIds.
     if (orderIndex_.find(id) != orderIndex_.end()) {
 
         result.status =
@@ -379,158 +437,39 @@ OrderResult OrderBook::addMarketOrder(
     }
 
 
-    // =========================================
-    // MARKET BUY
-    // =========================================
-
     if (side == Side::Buy) {
 
-        while (
-            quantity > 0 &&
-            !asks_.empty()
-        ) {
-
-            auto bestAskIt =
-                asks_.begin();
-
-
-            PriceLevel& level =
-                bestAskIt->second;
-
-
-            while (
-                quantity > 0 &&
-                !level.orders.empty()
-            ) {
-
-                Order& restingOrder =
-                    level.orders.front();
-
-
-                Quantity tradedQuantity =
-                    std::min(
-                        quantity,
-                        restingOrder.quantity
-                    );
-
-
-                Trade trade {
-                    id,
-                    restingOrder.id,
-                    restingOrder.price,
-                    tradedQuantity
-                };
-
-
-                result.trades.push_back(trade);
-
-
-                quantity -=
-                    tradedQuantity;
-
-                restingOrder.quantity -=
-                    tradedQuantity;
-
-
-                if (restingOrder.quantity == 0) {
-
-                    orderIndex_.erase(
-                        restingOrder.id
-                    );
-
-                    level.orders.pop_front();
-                }
-            }
-
-
-            if (level.orders.empty()) {
-                asks_.erase(bestAskIt);
-            }
-        }
+        matchBuy(
+            id,
+            quantity,
+            0,
+            true,
+            result
+        );
     }
-
-
-    // =========================================
-    // MARKET SELL
-    // =========================================
 
     else {
 
-        while (
-            quantity > 0 &&
-            !bids_.empty()
-        ) {
-
-            auto bestBidIt =
-                bids_.begin();
-
-
-            PriceLevel& level =
-                bestBidIt->second;
-
-
-            while (
-                quantity > 0 &&
-                !level.orders.empty()
-            ) {
-
-                Order& restingOrder =
-                    level.orders.front();
-
-
-                Quantity tradedQuantity =
-                    std::min(
-                        quantity,
-                        restingOrder.quantity
-                    );
-
-
-                Trade trade {
-                    restingOrder.id,
-                    id,
-                    restingOrder.price,
-                    tradedQuantity
-                };
-
-
-                result.trades.push_back(trade);
-
-
-                quantity -=
-                    tradedQuantity;
-
-                restingOrder.quantity -=
-                    tradedQuantity;
-
-
-                if (restingOrder.quantity == 0) {
-
-                    orderIndex_.erase(
-                        restingOrder.id
-                    );
-
-                    level.orders.pop_front();
-                }
-            }
-
-
-            if (level.orders.empty()) {
-                bids_.erase(bestBidIt);
-            }
-        }
+        matchSell(
+            id,
+            quantity,
+            0,
+            true,
+            result
+        );
     }
 
 
-    // Important:
-    //
-    // Any unfilled market-order quantity is NOT
-    // inserted into the book.
-    //
     // Market orders never rest.
-
+    //
+    // Any remaining quantity disappears.
     return result;
 }
 
+
+// =============================================
+// CANCEL ORDER
+// =============================================
 
 bool OrderBook::cancelOrder(OrderId id) {
 
@@ -620,6 +559,10 @@ bool OrderBook::cancelOrder(OrderId id) {
 }
 
 
+// =============================================
+// MODIFY ORDER
+// =============================================
+
 OrderResult OrderBook::modifyOrder(
     OrderId id,
     Price newPrice,
@@ -647,10 +590,7 @@ OrderResult OrderBook::modifyOrder(
         *location.orderIt;
 
 
-    // -----------------------------------------
-    // Quantity zero = cancellation
-    // -----------------------------------------
-
+    // Quantity zero = cancellation.
     if (newQuantity == 0) {
 
         cancelOrder(id);
@@ -662,12 +602,9 @@ OrderResult OrderBook::modifyOrder(
     }
 
 
-    // -----------------------------------------
-    // Same price + lower/equal quantity
+    // Same price + lower/equal quantity:
     //
-    // Keep priority.
-    // -----------------------------------------
-
+    // keep queue priority.
     if (
         newPrice == existingOrder.price &&
         newQuantity <= existingOrder.quantity
@@ -683,11 +620,9 @@ OrderResult OrderBook::modifyOrder(
     }
 
 
-    // -----------------------------------------
-    // Price change OR quantity increase
+    // Price change or quantity increase:
     //
-    // Lose priority.
-    // -----------------------------------------
+    // lose priority.
 
     Side side =
         existingOrder.side;

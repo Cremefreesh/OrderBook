@@ -40,11 +40,30 @@ private:
     };
 
 
+    void matchBuy(
+        OrderId incomingId,
+        Quantity& remainingQuantity,
+        Price limitPrice,
+        bool isMarketOrder,
+        OrderResult& result
+    );
+
+
+    void matchSell(
+        OrderId incomingId,
+        Quantity& remainingQuantity,
+        Price limitPrice,
+        bool isMarketOrder,
+        OrderResult& result
+    );
+
+
     std::map<
         Price,
         PriceLevel,
         std::greater<Price>
     > bids_;
+
 
     std::map<
         Price,

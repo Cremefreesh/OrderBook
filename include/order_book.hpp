@@ -1,13 +1,22 @@
 #pragma once
 
+#include <cstddef>
 #include <functional>
 #include <list>
 #include <map>
 #include <unordered_map>
+#include <vector>
 
 #include "order.hpp"
 #include "order_result.hpp"
 #include "price_level.hpp"
+
+
+struct LevelSnapshot {
+    Price price;
+    std::uint64_t totalQuantity;
+    std::size_t orderCount;
+};
 
 
 class OrderBook {
@@ -38,6 +47,14 @@ public:
 
     Price bestBid() const;
     Price bestAsk() const;
+
+    std::vector<LevelSnapshot> topBids(
+        std::size_t depth
+    ) const;
+
+    std::vector<LevelSnapshot> topAsks(
+        std::size_t depth
+    ) const;
 
 
 private:

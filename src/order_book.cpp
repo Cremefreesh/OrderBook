@@ -23,6 +23,93 @@ Price OrderBook::bestAsk() const {
     return asks_.begin()->first;
 }
 
+std::vector<LevelSnapshot> OrderBook::topBids(
+    std::size_t depth
+) const {
+
+    std::vector<LevelSnapshot> snapshots;
+
+    snapshots.reserve(depth);
+
+
+    std::size_t levelsAdded = 0;
+
+
+    for (const auto& [price, level] : bids_) {
+
+        if (levelsAdded >= depth) {
+            break;
+        }
+
+
+        std::uint64_t totalQuantity = 0;
+
+
+        for (const Order& order : level.orders) {
+
+            totalQuantity +=
+                order.quantity;
+        }
+
+
+        snapshots.push_back({
+            price,
+            totalQuantity,
+            level.orders.size()
+        });
+
+
+        ++levelsAdded;
+    }
+
+
+    return snapshots;
+}
+
+
+std::vector<LevelSnapshot> OrderBook::topAsks(
+    std::size_t depth
+) const {
+
+    std::vector<LevelSnapshot> snapshots;
+
+    snapshots.reserve(depth);
+
+
+    std::size_t levelsAdded = 0;
+
+
+    for (const auto& [price, level] : asks_) {
+
+        if (levelsAdded >= depth) {
+            break;
+        }
+
+
+        std::uint64_t totalQuantity = 0;
+
+
+        for (const Order& order : level.orders) {
+
+            totalQuantity +=
+                order.quantity;
+        }
+
+
+        snapshots.push_back({
+            price,
+            totalQuantity,
+            level.orders.size()
+        });
+
+
+        ++levelsAdded;
+    }
+
+
+    return snapshots;
+}
+
 
 // =============================================
 // CHECK WHETHER BUY CAN FULLY EXECUTE

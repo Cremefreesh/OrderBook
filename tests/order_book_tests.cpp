@@ -1002,6 +1002,155 @@ void testInvalidModifyPriceDoesNotChangeOrder() {
     assert(book.cancelOrder(1));
 }
 
+void testTopBidsReturnsCorrectLevels() {
+    OrderBook book;
+
+
+    book.addLimitOrder({
+        1,
+        10000,
+        30,
+        Side::Buy
+    });
+
+    book.addLimitOrder({
+        2,
+        10000,
+        20,
+        Side::Buy
+    });
+
+    book.addLimitOrder({
+        3,
+        9999,
+        40,
+        Side::Buy
+    });
+
+    book.addLimitOrder({
+        4,
+        9998,
+        50,
+        Side::Buy
+    });
+
+
+    auto bids =
+        book.topBids(2);
+
+
+    assert(bids.size() == 2);
+
+
+    assert(bids[0].price == 10000);
+    assert(bids[0].totalQuantity == 50);
+    assert(bids[0].orderCount == 2);
+
+
+    assert(bids[1].price == 9999);
+    assert(bids[1].totalQuantity == 40);
+    assert(bids[1].orderCount == 1);
+}
+
+
+void testTopAsksReturnsCorrectLevels() {
+    OrderBook book;
+
+
+    book.addLimitOrder({
+        1,
+        10005,
+        25,
+        Side::Sell
+    });
+
+    book.addLimitOrder({
+        2,
+        10005,
+        35,
+        Side::Sell
+    });
+
+    book.addLimitOrder({
+        3,
+        10006,
+        40,
+        Side::Sell
+    });
+
+    book.addLimitOrder({
+        4,
+        10007,
+        50,
+        Side::Sell
+    });
+
+
+    auto asks =
+        book.topAsks(2);
+
+
+    assert(asks.size() == 2);
+
+
+    assert(asks[0].price == 10005);
+    assert(asks[0].totalQuantity == 60);
+    assert(asks[0].orderCount == 2);
+
+
+    assert(asks[1].price == 10006);
+    assert(asks[1].totalQuantity == 40);
+    assert(asks[1].orderCount == 1);
+}
+
+
+void testSnapshotDepthGreaterThanBook() {
+    OrderBook book;
+
+
+    book.addLimitOrder({
+        1,
+        10000,
+        50,
+        Side::Buy
+    });
+
+
+    auto bids =
+        book.topBids(10);
+
+
+    assert(bids.size() == 1);
+
+    assert(bids[0].price == 10000);
+    assert(bids[0].totalQuantity == 50);
+    assert(bids[0].orderCount == 1);
+}
+
+
+void testZeroSnapshotDepthReturnsEmpty() {
+    OrderBook book;
+
+
+    book.addLimitOrder({
+        1,
+        10000,
+        50,
+        Side::Buy
+    });
+
+
+    auto bids =
+        book.topBids(0);
+
+
+    auto asks =
+        book.topAsks(0);
+
+
+    assert(bids.empty());
+    assert(asks.empty());
+}
 
 int main() {
 

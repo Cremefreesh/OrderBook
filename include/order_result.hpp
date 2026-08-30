@@ -8,7 +8,8 @@
 enum class OrderStatus {
     Accepted,
     DuplicateOrderId,
-    OrderNotFound
+    OrderNotFound,
+    InsufficientLiquidity
 };
 
 

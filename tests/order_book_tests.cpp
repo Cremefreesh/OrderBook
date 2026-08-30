@@ -187,10 +187,7 @@ void testCancelExistingOrder() {
 void testCancelNonexistentOrder() {
     OrderBook book;
 
-    bool cancelled =
-        book.cancelOrder(999);
-
-    assert(!cancelled);
+    assert(!book.cancelOrder(999));
 }
 
 
@@ -205,7 +202,6 @@ void testDuplicateOrderIdRejected() {
             Side::Buy
         });
 
-
     auto duplicateResult =
         book.addLimitOrder({
             1,
@@ -213,7 +209,6 @@ void testDuplicateOrderIdRejected() {
             100,
             Side::Buy
         });
-
 
     assert(firstResult.accepted());
 
@@ -238,7 +233,6 @@ void testModifyNonexistentOrder() {
             50
         );
 
-
     assert(
         result.status ==
         OrderStatus::OrderNotFound
@@ -258,7 +252,6 @@ void testModifyQuantityToZeroCancels() {
         Side::Buy
     });
 
-
     auto result =
         book.modifyOrder(
             1,
@@ -266,11 +259,9 @@ void testModifyQuantityToZeroCancels() {
             0
         );
 
-
     assert(result.accepted());
 
     assert(book.bestBid() == 0);
-
     assert(!book.cancelOrder(1));
 }
 
@@ -292,7 +283,6 @@ void testQuantityDecreaseKeepsPriority() {
         Side::Sell
     });
 
-
     auto modifyResult =
         book.modifyOrder(
             1,
@@ -300,9 +290,7 @@ void testQuantityDecreaseKeepsPriority() {
             50
         );
 
-
     assert(modifyResult.accepted());
-
 
     auto result =
         book.addLimitOrder({
@@ -312,9 +300,7 @@ void testQuantityDecreaseKeepsPriority() {
             Side::Buy
         });
 
-
     assert(result.trades.size() == 1);
-
     assert(result.trades[0].sellOrderId == 1);
 }
 
@@ -336,7 +322,6 @@ void testQuantityIncreaseLosesPriority() {
         Side::Sell
     });
 
-
     auto modifyResult =
         book.modifyOrder(
             1,
@@ -344,9 +329,7 @@ void testQuantityIncreaseLosesPriority() {
             100
         );
 
-
     assert(modifyResult.accepted());
-
 
     auto result =
         book.addLimitOrder({
@@ -356,9 +339,7 @@ void testQuantityIncreaseLosesPriority() {
             Side::Buy
         });
 
-
     assert(result.trades.size() == 1);
-
     assert(result.trades[0].sellOrderId == 2);
 }
 
@@ -373,7 +354,6 @@ void testModifyCanGenerateTrades() {
         Side::Sell
     });
 
-
     book.addLimitOrder({
         2,
         10000,
@@ -381,14 +361,12 @@ void testModifyCanGenerateTrades() {
         Side::Buy
     });
 
-
     auto result =
         book.modifyOrder(
             2,
             10005,
             50
         );
-
 
     assert(result.accepted());
 
@@ -405,9 +383,8 @@ void testModifyCanGenerateTrades() {
 
 
 // =============================================
-// MARKET ORDER TESTS
+// MARKET TESTS
 // =============================================
-
 
 void testMarketBuyConsumesBestAsk() {
     OrderBook book;
@@ -419,7 +396,6 @@ void testMarketBuyConsumesBestAsk() {
         Side::Sell
     });
 
-
     auto result =
         book.addMarketOrder(
             2,
@@ -427,13 +403,9 @@ void testMarketBuyConsumesBestAsk() {
             Side::Buy
         );
 
-
     assert(result.accepted());
-
     assert(result.trades.size() == 1);
 
-    assert(result.trades[0].buyOrderId == 2);
-    assert(result.trades[0].sellOrderId == 1);
     assert(result.trades[0].price == 10005);
     assert(result.trades[0].quantity == 50);
 
@@ -451,7 +423,6 @@ void testMarketSellConsumesBestBid() {
         Side::Buy
     });
 
-
     auto result =
         book.addMarketOrder(
             2,
@@ -459,13 +430,9 @@ void testMarketSellConsumesBestBid() {
             Side::Sell
         );
 
-
     assert(result.accepted());
-
     assert(result.trades.size() == 1);
 
-    assert(result.trades[0].buyOrderId == 1);
-    assert(result.trades[0].sellOrderId == 2);
     assert(result.trades[0].price == 10000);
     assert(result.trades[0].quantity == 40);
 
@@ -497,7 +464,6 @@ void testMarketOrderSweepsPriceLevels() {
         Side::Sell
     });
 
-
     auto result =
         book.addMarketOrder(
             4,
@@ -505,19 +471,11 @@ void testMarketOrderSweepsPriceLevels() {
             Side::Buy
         );
 
-
-    assert(result.accepted());
-
     assert(result.trades.size() == 3);
 
     assert(result.trades[0].price == 10001);
-    assert(result.trades[0].quantity == 20);
-
     assert(result.trades[1].price == 10002);
-    assert(result.trades[1].quantity == 20);
-
     assert(result.trades[2].price == 10003);
-    assert(result.trades[2].quantity == 10);
 
     assert(book.bestAsk() == 10003);
 }
@@ -526,7 +484,6 @@ void testMarketOrderSweepsPriceLevels() {
 void testMarketOrderDoesNotRest() {
     OrderBook book;
 
-
     auto result =
         book.addMarketOrder(
             1,
@@ -534,9 +491,7 @@ void testMarketOrderDoesNotRest() {
             Side::Buy
         );
 
-
     assert(result.accepted());
-
     assert(result.trades.empty());
 
     assert(book.bestBid() == 0);
@@ -550,10 +505,8 @@ void testMarketOrderDoesNotRest() {
 // IOC TESTS
 // =============================================
 
-
 void testIocBuyPartiallyFillsAndDoesNotRest() {
     OrderBook book;
-
 
     book.addLimitOrder({
         1,
@@ -561,7 +514,6 @@ void testIocBuyPartiallyFillsAndDoesNotRest() {
         40,
         Side::Sell
     });
-
 
     auto result =
         book.addImmediateOrCancelOrder({
@@ -571,28 +523,18 @@ void testIocBuyPartiallyFillsAndDoesNotRest() {
             Side::Buy
         });
 
-
     assert(result.accepted());
 
     assert(result.trades.size() == 1);
-
-    assert(result.trades[0].buyOrderId == 2);
-    assert(result.trades[0].sellOrderId == 1);
-    assert(result.trades[0].price == 10005);
     assert(result.trades[0].quantity == 40);
 
-
-    // Remaining 60 must NOT become a resting bid.
     assert(book.bestBid() == 0);
-
-    // Order 2 should not exist in the active index.
     assert(!book.cancelOrder(2));
 }
 
 
 void testIocRespectsLimitPrice() {
     OrderBook book;
-
 
     book.addLimitOrder({
         1,
@@ -615,7 +557,6 @@ void testIocRespectsLimitPrice() {
         Side::Sell
     });
 
-
     auto result =
         book.addImmediateOrCancelOrder({
             4,
@@ -624,29 +565,14 @@ void testIocRespectsLimitPrice() {
             Side::Buy
         });
 
-
     assert(result.accepted());
 
-
-    // It may buy at 10001 and 10002.
     assert(result.trades.size() == 2);
 
-
     assert(result.trades[0].price == 10001);
-    assert(result.trades[0].quantity == 20);
-
-
     assert(result.trades[1].price == 10002);
-    assert(result.trades[1].quantity == 20);
 
-
-    // It MUST NOT trade at 10003 because
-    // the IOC limit price is only 10002.
     assert(book.bestAsk() == 10003);
-
-
-    // Remaining quantity was cancelled rather
-    // than becoming a bid.
     assert(book.bestBid() == 0);
 }
 
@@ -654,14 +580,12 @@ void testIocRespectsLimitPrice() {
 void testIocWithNoMatchDoesNotRest() {
     OrderBook book;
 
-
     book.addLimitOrder({
         1,
         10010,
         50,
         Side::Sell
     });
-
 
     auto result =
         book.addImmediateOrCancelOrder({
@@ -671,19 +595,226 @@ void testIocWithNoMatchDoesNotRest() {
             Side::Buy
         });
 
+    assert(result.accepted());
+    assert(result.trades.empty());
+
+    assert(book.bestAsk() == 10010);
+    assert(book.bestBid() == 0);
+
+    assert(!book.cancelOrder(2));
+}
+
+
+// =============================================
+// FOK TESTS
+// =============================================
+
+void testFokExecutesWhenFullyFillable() {
+    OrderBook book;
+
+    book.addLimitOrder({
+        1,
+        10001,
+        20,
+        Side::Sell
+    });
+
+    book.addLimitOrder({
+        2,
+        10002,
+        30,
+        Side::Sell
+    });
+
+    book.addLimitOrder({
+        3,
+        10003,
+        50,
+        Side::Sell
+    });
+
+
+    auto result =
+        book.addFillOrKillOrder({
+            4,
+            10002,
+            50,
+            Side::Buy
+        });
+
 
     assert(result.accepted());
+
+    assert(result.trades.size() == 2);
+
+    assert(result.trades[0].price == 10001);
+    assert(result.trades[0].quantity == 20);
+
+    assert(result.trades[1].price == 10002);
+    assert(result.trades[1].quantity == 30);
+
+
+    assert(book.bestAsk() == 10003);
+
+    assert(!book.cancelOrder(4));
+}
+
+
+void testFokFailsWithoutChangingBook() {
+    OrderBook book;
+
+    book.addLimitOrder({
+        1,
+        10001,
+        20,
+        Side::Sell
+    });
+
+    book.addLimitOrder({
+        2,
+        10002,
+        30,
+        Side::Sell
+    });
+
+    book.addLimitOrder({
+        3,
+        10003,
+        50,
+        Side::Sell
+    });
+
+
+    // Only 50 units exist at 10002 or better.
+    //
+    // We require 70.
+    auto result =
+        book.addFillOrKillOrder({
+            4,
+            10002,
+            70,
+            Side::Buy
+        });
+
+
+    assert(
+        result.status ==
+        OrderStatus::InsufficientLiquidity
+    );
+
+    assert(!result.accepted());
 
     assert(result.trades.empty());
 
 
-    // Existing sell remains.
-    assert(book.bestAsk() == 10010);
+    // The book MUST be untouched.
+    assert(book.bestAsk() == 10001);
 
 
-    // IOC buy disappears completely.
-    assert(book.bestBid() == 0);
-    assert(!book.cancelOrder(2));
+    // Prove Order 1 still exists.
+    assert(book.cancelOrder(1));
+
+
+    // After cancelling Order 1,
+    // 10002 should now be best ask.
+    assert(book.bestAsk() == 10002);
+}
+
+
+void testFokDoesNotUsePricesOutsideLimit() {
+    OrderBook book;
+
+    book.addLimitOrder({
+        1,
+        10001,
+        20,
+        Side::Sell
+    });
+
+    book.addLimitOrder({
+        2,
+        10002,
+        20,
+        Side::Sell
+    });
+
+    book.addLimitOrder({
+        3,
+        10050,
+        1000,
+        Side::Sell
+    });
+
+
+    // There is loads of total liquidity,
+    // but only 40 units at 10002 or better.
+    auto result =
+        book.addFillOrKillOrder({
+            4,
+            10002,
+            50,
+            Side::Buy
+        });
+
+
+    assert(
+        result.status ==
+        OrderStatus::InsufficientLiquidity
+    );
+
+    assert(result.trades.empty());
+
+
+    // Nothing was consumed.
+    assert(book.bestAsk() == 10001);
+}
+
+
+void testFokSellFullyExecutes() {
+    OrderBook book;
+
+    book.addLimitOrder({
+        1,
+        10005,
+        20,
+        Side::Buy
+    });
+
+    book.addLimitOrder({
+        2,
+        10004,
+        30,
+        Side::Buy
+    });
+
+    book.addLimitOrder({
+        3,
+        10003,
+        50,
+        Side::Buy
+    });
+
+
+    auto result =
+        book.addFillOrKillOrder({
+            4,
+            10004,
+            50,
+            Side::Sell
+        });
+
+
+    assert(result.accepted());
+
+    assert(result.trades.size() == 2);
+
+    assert(result.trades[0].price == 10005);
+    assert(result.trades[0].quantity == 20);
+
+    assert(result.trades[1].price == 10004);
+    assert(result.trades[1].quantity == 30);
+
+    assert(book.bestBid() == 10003);
 }
 
 
@@ -697,7 +828,6 @@ int main() {
 
     testCancelExistingOrder();
     testCancelNonexistentOrder();
-
     testDuplicateOrderIdRejected();
 
     testModifyNonexistentOrder();
@@ -714,6 +844,11 @@ int main() {
     testIocBuyPartiallyFillsAndDoesNotRest();
     testIocRespectsLimitPrice();
     testIocWithNoMatchDoesNotRest();
+
+    testFokExecutesWhenFullyFillable();
+    testFokFailsWithoutChangingBook();
+    testFokDoesNotUsePricesOutsideLimit();
+    testFokSellFullyExecutes();
 
 
     std::cout

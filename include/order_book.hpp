@@ -24,6 +24,10 @@ public:
         Order order
     );
 
+    OrderResult addFillOrKillOrder(
+        Order order
+    );
+
     bool cancelOrder(OrderId id);
 
     OrderResult modifyOrder(
@@ -60,6 +64,18 @@ private:
         bool isMarketOrder,
         OrderResult& result
     );
+
+
+    bool canFullyFillBuy(
+        Quantity quantity,
+        Price limitPrice
+    ) const;
+
+
+    bool canFullyFillSell(
+        Quantity quantity,
+        Price limitPrice
+    ) const;
 
 
     std::map<

@@ -1,6 +1,7 @@
 #include "order_book.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <iterator>
 #include <utility>
 
@@ -20,6 +21,93 @@ Price OrderBook::bestAsk() const {
     }
 
     return asks_.begin()->first;
+}
+
+
+// =============================================
+// CHECK WHETHER BUY CAN FULLY EXECUTE
+// =============================================
+
+bool OrderBook::canFullyFillBuy(
+    Quantity quantity,
+    Price limitPrice
+) const {
+
+    std::uint64_t availableQuantity = 0;
+
+
+    // asks_ is sorted lowest price first.
+    //
+    // Therefore we inspect:
+    //
+    // cheapest ask
+    // next cheapest ask
+    // next cheapest ask
+    // ...
+    for (const auto& [price, level] : asks_) {
+
+        // Anything above our limit price
+        // cannot be used.
+        if (price > limitPrice) {
+            break;
+        }
+
+
+        for (const Order& order : level.orders) {
+
+            availableQuantity +=
+                order.quantity;
+
+
+            // Stop early as soon as we know
+            // enough liquidity exists.
+            if (availableQuantity >= quantity) {
+                return true;
+            }
+        }
+    }
+
+
+    return false;
+}
+
+
+// =============================================
+// CHECK WHETHER SELL CAN FULLY EXECUTE
+// =============================================
+
+bool OrderBook::canFullyFillSell(
+    Quantity quantity,
+    Price limitPrice
+) const {
+
+    std::uint64_t availableQuantity = 0;
+
+
+    // bids_ is sorted highest price first.
+    for (const auto& [price, level] : bids_) {
+
+        // Anything below the sell limit
+        // cannot be used.
+        if (price < limitPrice) {
+            break;
+        }
+
+
+        for (const Order& order : level.orders) {
+
+            availableQuantity +=
+                order.quantity;
+
+
+            if (availableQuantity >= quantity) {
+                return true;
+            }
+        }
+    }
+
+
+    return false;
 }
 
 
@@ -48,9 +136,6 @@ void OrderBook::matchBuy(
             bestAskIt->first;
 
 
-        // Limit orders must respect their price.
-        //
-        // Market orders ignore this check.
         if (
             !isMarketOrder &&
             limitPrice < bestAskPrice
@@ -63,7 +148,6 @@ void OrderBook::matchBuy(
             bestAskIt->second;
 
 
-        // FIFO matching within this price level.
         while (
             remainingQuantity > 0 &&
             !level.orders.empty()
@@ -98,7 +182,6 @@ void OrderBook::matchBuy(
                 tradedQuantity;
 
 
-            // Resting order fully filled.
             if (restingOrder.quantity == 0) {
 
                 orderIndex_.erase(
@@ -110,7 +193,6 @@ void OrderBook::matchBuy(
         }
 
 
-        // Entire ask level consumed.
         if (level.orders.empty()) {
             asks_.erase(bestAskIt);
         }
@@ -143,9 +225,6 @@ void OrderBook::matchSell(
             bestBidIt->first;
 
 
-        // Limit orders must respect their price.
-        //
-        // Market orders ignore this check.
         if (
             !isMarketOrder &&
             limitPrice > bestBidPrice
@@ -158,7 +237,6 @@ void OrderBook::matchSell(
             bestBidIt->second;
 
 
-        // FIFO matching within this price level.
         while (
             remainingQuantity > 0 &&
             !level.orders.empty()
@@ -193,7 +271,6 @@ void OrderBook::matchSell(
                 tradedQuantity;
 
 
-            // Resting order fully filled.
             if (restingOrder.quantity == 0) {
 
                 orderIndex_.erase(
@@ -205,7 +282,6 @@ void OrderBook::matchSell(
         }
 
 
-        // Entire bid level consumed.
         if (level.orders.empty()) {
             bids_.erase(bestBidIt);
         }
@@ -225,8 +301,10 @@ OrderResult OrderBook::addLimitOrder(Order order) {
     };
 
 
-    // Reject duplicate active OrderIds.
-    if (orderIndex_.find(order.id) != orderIndex_.end()) {
+    if (
+        orderIndex_.find(order.id) !=
+        orderIndex_.end()
+    ) {
 
         result.status =
             OrderStatus::DuplicateOrderId;
@@ -236,7 +314,7 @@ OrderResult OrderBook::addLimitOrder(Order order) {
 
 
     // =========================================
-    // BUY LIMIT ORDER
+    // BUY LIMIT
     // =========================================
 
     if (order.side == Side::Buy) {
@@ -250,7 +328,6 @@ OrderResult OrderBook::addLimitOrder(Order order) {
         );
 
 
-        // Rest any unfilled quantity.
         if (order.quantity > 0) {
 
             auto levelIt =
@@ -322,7 +399,7 @@ OrderResult OrderBook::addLimitOrder(Order order) {
 
 
     // =========================================
-    // SELL LIMIT ORDER
+    // SELL LIMIT
     // =========================================
 
     else {
@@ -336,7 +413,6 @@ OrderResult OrderBook::addLimitOrder(Order order) {
         );
 
 
-        // Rest any unfilled quantity.
         if (order.quantity > 0) {
 
             auto levelIt =
@@ -427,8 +503,10 @@ OrderResult OrderBook::addMarketOrder(
     };
 
 
-    // Reject duplicate active OrderIds.
-    if (orderIndex_.find(id) != orderIndex_.end()) {
+    if (
+        orderIndex_.find(id) !=
+        orderIndex_.end()
+    ) {
 
         result.status =
             OrderStatus::DuplicateOrderId;
@@ -460,7 +538,6 @@ OrderResult OrderBook::addMarketOrder(
     }
 
 
-    // Market orders never rest.
     return result;
 }
 
@@ -479,7 +556,6 @@ OrderResult OrderBook::addImmediateOrCancelOrder(
     };
 
 
-    // Reject duplicate active OrderIds.
     if (
         orderIndex_.find(order.id) !=
         orderIndex_.end()
@@ -492,10 +568,6 @@ OrderResult OrderBook::addImmediateOrCancelOrder(
     }
 
 
-    // =========================================
-    // IOC BUY
-    // =========================================
-
     if (order.side == Side::Buy) {
 
         matchBuy(
@@ -506,11 +578,6 @@ OrderResult OrderBook::addImmediateOrCancelOrder(
             result
         );
     }
-
-
-    // =========================================
-    // IOC SELL
-    // =========================================
 
     else {
 
@@ -524,15 +591,111 @@ OrderResult OrderBook::addImmediateOrCancelOrder(
     }
 
 
+    // IOC remainder is discarded.
+    return result;
+}
+
+
+// =============================================
+// ADD FILL-OR-KILL ORDER
+// =============================================
+
+OrderResult OrderBook::addFillOrKillOrder(
+    Order order
+) {
+
+    OrderResult result {
+        OrderStatus::Accepted,
+        {}
+    };
+
+
     // -----------------------------------------
-    // IMPORTANT
+    // Reject duplicate active ID
     // -----------------------------------------
+
+    if (
+        orderIndex_.find(order.id) !=
+        orderIndex_.end()
+    ) {
+
+        result.status =
+            OrderStatus::DuplicateOrderId;
+
+        return result;
+    }
+
+
+    // -----------------------------------------
+    // PRE-FLIGHT LIQUIDITY CHECK
+    // -----------------------------------------
+
+    bool canFullyFill = false;
+
+
+    if (order.side == Side::Buy) {
+
+        canFullyFill =
+            canFullyFillBuy(
+                order.quantity,
+                order.price
+            );
+    }
+
+    else {
+
+        canFullyFill =
+            canFullyFillSell(
+                order.quantity,
+                order.price
+            );
+    }
+
+
+    // -----------------------------------------
+    // Cannot fill entire quantity.
     //
-    // Unlike addLimitOrder(), we DO NOT insert
-    // remaining quantity into bids_ or asks_.
+    // IMPORTANT:
+    // We have not modified the book at all.
+    // -----------------------------------------
+
+    if (!canFullyFill) {
+
+        result.status =
+            OrderStatus::InsufficientLiquidity;
+
+        return result;
+    }
+
+
+    // -----------------------------------------
+    // Entire order can be executed.
     //
-    // Any unfilled quantity is immediately
-    // cancelled.
+    // Now it is safe to perform matching.
+    // -----------------------------------------
+
+    if (order.side == Side::Buy) {
+
+        matchBuy(
+            order.id,
+            order.quantity,
+            order.price,
+            false,
+            result
+        );
+    }
+
+    else {
+
+        matchSell(
+            order.id,
+            order.quantity,
+            order.price,
+            false,
+            result
+        );
+    }
+
 
     return result;
 }
@@ -556,10 +719,6 @@ bool OrderBook::cancelOrder(OrderId id) {
     OrderLocation location =
         indexIt->second;
 
-
-    // =========================================
-    // CANCEL BUY
-    // =========================================
 
     if (location.side == Side::Buy) {
 
@@ -588,11 +747,6 @@ bool OrderBook::cancelOrder(OrderId id) {
             bids_.erase(levelIt);
         }
     }
-
-
-    // =========================================
-    // CANCEL SELL
-    // =========================================
 
     else {
 
@@ -661,7 +815,6 @@ OrderResult OrderBook::modifyOrder(
         *location.orderIt;
 
 
-    // Quantity zero = cancellation.
     if (newQuantity == 0) {
 
         cancelOrder(id);
@@ -673,9 +826,6 @@ OrderResult OrderBook::modifyOrder(
     }
 
 
-    // Same price + lower/equal quantity:
-    //
-    // keep queue priority.
     if (
         newPrice == existingOrder.price &&
         newQuantity <= existingOrder.quantity
@@ -690,10 +840,6 @@ OrderResult OrderBook::modifyOrder(
         };
     }
 
-
-    // Price change or quantity increase:
-    //
-    // lose priority.
 
     Side side =
         existingOrder.side;

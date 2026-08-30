@@ -461,8 +461,79 @@ OrderResult OrderBook::addMarketOrder(
 
 
     // Market orders never rest.
+    return result;
+}
+
+
+// =============================================
+// ADD IMMEDIATE-OR-CANCEL ORDER
+// =============================================
+
+OrderResult OrderBook::addImmediateOrCancelOrder(
+    Order order
+) {
+
+    OrderResult result {
+        OrderStatus::Accepted,
+        {}
+    };
+
+
+    // Reject duplicate active OrderIds.
+    if (
+        orderIndex_.find(order.id) !=
+        orderIndex_.end()
+    ) {
+
+        result.status =
+            OrderStatus::DuplicateOrderId;
+
+        return result;
+    }
+
+
+    // =========================================
+    // IOC BUY
+    // =========================================
+
+    if (order.side == Side::Buy) {
+
+        matchBuy(
+            order.id,
+            order.quantity,
+            order.price,
+            false,
+            result
+        );
+    }
+
+
+    // =========================================
+    // IOC SELL
+    // =========================================
+
+    else {
+
+        matchSell(
+            order.id,
+            order.quantity,
+            order.price,
+            false,
+            result
+        );
+    }
+
+
+    // -----------------------------------------
+    // IMPORTANT
+    // -----------------------------------------
     //
-    // Any remaining quantity disappears.
+    // Unlike addLimitOrder(), we DO NOT insert
+    // remaining quantity into bids_ or asks_.
+    //
+    // Any unfilled quantity is immediately
+    // cancelled.
+
     return result;
 }
 

@@ -20,6 +20,10 @@ public:
         Side side
     );
 
+    OrderResult addImmediateOrCancelOrder(
+        Order order
+    );
+
     bool cancelOrder(OrderId id);
 
     OrderResult modifyOrder(

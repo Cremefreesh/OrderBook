@@ -366,7 +366,6 @@ void testQuantityIncreaseLosesPriority() {
 void testModifyCanGenerateTrades() {
     OrderBook book;
 
-
     book.addLimitOrder({
         1,
         10005,
@@ -413,7 +412,6 @@ void testModifyCanGenerateTrades() {
 void testMarketBuyConsumesBestAsk() {
     OrderBook book;
 
-
     book.addLimitOrder({
         1,
         10005,
@@ -446,7 +444,6 @@ void testMarketBuyConsumesBestAsk() {
 void testMarketSellConsumesBestBid() {
     OrderBook book;
 
-
     book.addLimitOrder({
         1,
         10000,
@@ -478,7 +475,6 @@ void testMarketSellConsumesBestBid() {
 
 void testMarketOrderSweepsPriceLevels() {
     OrderBook book;
-
 
     book.addLimitOrder({
         1,
@@ -514,20 +510,15 @@ void testMarketOrderSweepsPriceLevels() {
 
     assert(result.trades.size() == 3);
 
-
     assert(result.trades[0].price == 10001);
     assert(result.trades[0].quantity == 20);
-
 
     assert(result.trades[1].price == 10002);
     assert(result.trades[1].quantity == 20);
 
-
     assert(result.trades[2].price == 10003);
     assert(result.trades[2].quantity == 10);
 
-
-    // 10 units should remain at 10003.
     assert(book.bestAsk() == 10003);
 }
 
@@ -548,16 +539,151 @@ void testMarketOrderDoesNotRest() {
 
     assert(result.trades.empty());
 
-
-    // There were no sellers,
-    // so the market buy disappears.
     assert(book.bestBid() == 0);
     assert(book.bestAsk() == 0);
 
-
-    // Since market orders never rest,
-    // there is nothing to cancel.
     assert(!book.cancelOrder(1));
+}
+
+
+// =============================================
+// IOC TESTS
+// =============================================
+
+
+void testIocBuyPartiallyFillsAndDoesNotRest() {
+    OrderBook book;
+
+
+    book.addLimitOrder({
+        1,
+        10005,
+        40,
+        Side::Sell
+    });
+
+
+    auto result =
+        book.addImmediateOrCancelOrder({
+            2,
+            10005,
+            100,
+            Side::Buy
+        });
+
+
+    assert(result.accepted());
+
+    assert(result.trades.size() == 1);
+
+    assert(result.trades[0].buyOrderId == 2);
+    assert(result.trades[0].sellOrderId == 1);
+    assert(result.trades[0].price == 10005);
+    assert(result.trades[0].quantity == 40);
+
+
+    // Remaining 60 must NOT become a resting bid.
+    assert(book.bestBid() == 0);
+
+    // Order 2 should not exist in the active index.
+    assert(!book.cancelOrder(2));
+}
+
+
+void testIocRespectsLimitPrice() {
+    OrderBook book;
+
+
+    book.addLimitOrder({
+        1,
+        10001,
+        20,
+        Side::Sell
+    });
+
+    book.addLimitOrder({
+        2,
+        10002,
+        20,
+        Side::Sell
+    });
+
+    book.addLimitOrder({
+        3,
+        10003,
+        20,
+        Side::Sell
+    });
+
+
+    auto result =
+        book.addImmediateOrCancelOrder({
+            4,
+            10002,
+            100,
+            Side::Buy
+        });
+
+
+    assert(result.accepted());
+
+
+    // It may buy at 10001 and 10002.
+    assert(result.trades.size() == 2);
+
+
+    assert(result.trades[0].price == 10001);
+    assert(result.trades[0].quantity == 20);
+
+
+    assert(result.trades[1].price == 10002);
+    assert(result.trades[1].quantity == 20);
+
+
+    // It MUST NOT trade at 10003 because
+    // the IOC limit price is only 10002.
+    assert(book.bestAsk() == 10003);
+
+
+    // Remaining quantity was cancelled rather
+    // than becoming a bid.
+    assert(book.bestBid() == 0);
+}
+
+
+void testIocWithNoMatchDoesNotRest() {
+    OrderBook book;
+
+
+    book.addLimitOrder({
+        1,
+        10010,
+        50,
+        Side::Sell
+    });
+
+
+    auto result =
+        book.addImmediateOrCancelOrder({
+            2,
+            10005,
+            100,
+            Side::Buy
+        });
+
+
+    assert(result.accepted());
+
+    assert(result.trades.empty());
+
+
+    // Existing sell remains.
+    assert(book.bestAsk() == 10010);
+
+
+    // IOC buy disappears completely.
+    assert(book.bestBid() == 0);
+    assert(!book.cancelOrder(2));
 }
 
 
@@ -580,11 +706,14 @@ int main() {
     testQuantityIncreaseLosesPriority();
     testModifyCanGenerateTrades();
 
-
     testMarketBuyConsumesBestAsk();
     testMarketSellConsumesBestBid();
     testMarketOrderSweepsPriceLevels();
     testMarketOrderDoesNotRest();
+
+    testIocBuyPartiallyFillsAndDoesNotRest();
+    testIocRespectsLimitPrice();
+    testIocWithNoMatchDoesNotRest();
 
 
     std::cout

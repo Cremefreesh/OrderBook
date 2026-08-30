@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <list>
 #include <map>
 #include <unordered_map>
@@ -9,14 +10,22 @@
 #include "price_level.hpp"
 #include "trade.hpp"
 
+
 class OrderBook {
 public:
     std::vector<Trade> addLimitOrder(Order order);
 
     bool cancelOrder(OrderId id);
 
+    bool modifyOrder(
+        OrderId id,
+        Price newPrice,
+        Quantity newQuantity
+    );
+
     Price bestBid() const;
     Price bestAsk() const;
+
 
 private:
     struct OrderLocation {
@@ -25,8 +34,21 @@ private:
         std::list<Order>::iterator orderIt;
     };
 
-    std::map<Price, PriceLevel, std::greater<Price>> bids_;
-    std::map<Price, PriceLevel> asks_;
 
-    std::unordered_map<OrderId, OrderLocation> orderIndex_;
+    std::map<
+        Price,
+        PriceLevel,
+        std::greater<Price>
+    > bids_;
+
+    std::map<
+        Price,
+        PriceLevel
+    > asks_;
+
+
+    std::unordered_map<
+        OrderId,
+        OrderLocation
+    > orderIndex_;
 };

@@ -1,13 +1,138 @@
 #include <algorithm>
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <iostream>
+#include <new>
 #include <numeric>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "order_book.hpp"
 
+
+// =============================================
+// GLOBAL ALLOCATION INSTRUMENTATION
+// =============================================
+
+static bool g_countAllocations = false;
+
+static std::uint64_t g_allocationCount = 0;
+static std::uint64_t g_deallocationCount = 0;
+static std::uint64_t g_allocatedBytes = 0;
+
+
+// Override global operator new.
+//
+// Most standard-library heap allocations eventually
+// come through this function.
+void* operator new(std::size_t size) {
+
+    if (g_countAllocations) {
+
+        ++g_allocationCount;
+
+        g_allocatedBytes +=
+            static_cast<std::uint64_t>(size);
+    }
+
+
+    void* memory =
+        std::malloc(size);
+
+
+    if (memory == nullptr) {
+        throw std::bad_alloc();
+    }
+
+
+    return memory;
+}
+
+
+void operator delete(void* memory) noexcept {
+
+    if (g_countAllocations) {
+        ++g_deallocationCount;
+    }
+
+
+    std::free(memory);
+}
+
+
+void* operator new[](std::size_t size) {
+
+    if (g_countAllocations) {
+
+        ++g_allocationCount;
+
+        g_allocatedBytes +=
+            static_cast<std::uint64_t>(size);
+    }
+
+
+    void* memory =
+        std::malloc(size);
+
+
+    if (memory == nullptr) {
+        throw std::bad_alloc();
+    }
+
+
+    return memory;
+}
+
+
+void operator delete[](void* memory) noexcept {
+
+    if (g_countAllocations) {
+        ++g_deallocationCount;
+    }
+
+
+    std::free(memory);
+}
+
+
+// Sized delete overloads.
+//
+// Modern compilers may choose these forms when
+// the object's size is known at deletion time.
+void operator delete(
+    void* memory,
+    std::size_t
+) noexcept {
+
+    if (g_countAllocations) {
+        ++g_deallocationCount;
+    }
+
+
+    std::free(memory);
+}
+
+
+void operator delete[](
+    void* memory,
+    std::size_t
+) noexcept {
+
+    if (g_countAllocations) {
+        ++g_deallocationCount;
+    }
+
+
+    std::free(memory);
+}
+
+
+// =============================================
+// BENCHMARK TYPES
+// =============================================
 
 using Clock =
     std::chrono::steady_clock;
@@ -30,8 +155,18 @@ struct BenchmarkResult {
     std::uint64_t p99;
     std::uint64_t p999;
     std::uint64_t maximum;
+
+    std::uint64_t allocations;
+    std::uint64_t deallocations;
+    std::uint64_t allocatedBytes;
+
+    double allocationsPerOperation;
 };
 
+
+// =============================================
+// PERCENTILE
+// =============================================
 
 std::uint64_t percentile(
     const std::vector<std::uint64_t>& sortedSamples,
@@ -56,10 +191,17 @@ std::uint64_t percentile(
 }
 
 
+// =============================================
+// RESULT CALCULATION
+// =============================================
+
 BenchmarkResult calculateResult(
     const std::string& name,
     std::vector<std::uint64_t> latencies,
-    std::uint64_t totalNanoseconds
+    std::uint64_t totalNanoseconds,
+    std::uint64_t allocations,
+    std::uint64_t deallocations,
+    std::uint64_t allocatedBytes
 ) {
 
     std::sort(
@@ -102,19 +244,56 @@ BenchmarkResult calculateResult(
         totalSeconds;
 
 
+    double allocationsPerOperation =
+        static_cast<double>(
+            allocations
+        )
+        /
+        static_cast<double>(
+            latencies.size()
+        );
+
+
     return {
         name,
         latencies.size(),
         throughput,
         averageLatency,
-        percentile(latencies, 0.50),
-        percentile(latencies, 0.95),
-        percentile(latencies, 0.99),
-        percentile(latencies, 0.999),
-        latencies.back()
+
+        percentile(
+            latencies,
+            0.50
+        ),
+
+        percentile(
+            latencies,
+            0.95
+        ),
+
+        percentile(
+            latencies,
+            0.99
+        ),
+
+        percentile(
+            latencies,
+            0.999
+        ),
+
+        latencies.back(),
+
+        allocations,
+        deallocations,
+        allocatedBytes,
+
+        allocationsPerOperation
     };
 }
 
+
+// =============================================
+// RESULT OUTPUT
+// =============================================
 
 void printResult(
     const BenchmarkResult& result
@@ -124,6 +303,7 @@ void printResult(
         << "\n"
         << result.name
         << "\n";
+
 
     std::cout
         << "------------------------------\n";
@@ -175,6 +355,48 @@ void printResult(
         << "Maximum latency: "
         << result.maximum
         << " ns\n";
+
+
+    std::cout
+        << "\nMemory activity\n";
+
+
+    std::cout
+        << "Allocations: "
+        << result.allocations
+        << '\n';
+
+
+    std::cout
+        << "Deallocations: "
+        << result.deallocations
+        << '\n';
+
+
+    std::cout
+        << "Allocated bytes: "
+        << result.allocatedBytes
+        << '\n';
+
+
+    std::cout
+        << "Allocations / operation: "
+        << result.allocationsPerOperation
+        << '\n';
+}
+
+
+// =============================================
+// RESET ALLOCATION COUNTERS
+// =============================================
+
+void resetAllocationCounters() {
+
+    g_allocationCount = 0;
+
+    g_deallocationCount = 0;
+
+    g_allocatedBytes = 0;
 }
 
 
@@ -186,6 +408,9 @@ BenchmarkResult benchmarkRestingInsert(
     std::size_t numOrders
 ) {
 
+    // We know approximately how many active orders
+    // this workload will contain, so reserve the
+    // unordered_map upfront.
     OrderBook book(
         numOrders + 1000
     );
@@ -194,8 +419,9 @@ BenchmarkResult benchmarkRestingInsert(
     OrderId nextOrderId = 1;
 
 
-    // Preload asks so the opposite side exists,
-    // but incoming buys will not cross.
+    // Preload 1000 asks.
+    //
+    // These are outside the measured region.
     for (
         Price price = 10000;
         price < 10100;
@@ -216,7 +442,12 @@ BenchmarkResult benchmarkRestingInsert(
 
     std::vector<std::uint64_t> latencies;
 
-    latencies.reserve(numOrders);
+    latencies.reserve(
+        numOrders
+    );
+
+
+    resetAllocationCounters();
 
 
     auto benchmarkStart =
@@ -237,6 +468,9 @@ BenchmarkResult benchmarkRestingInsert(
         };
 
 
+        g_countAllocations = true;
+
+
         auto start =
             Clock::now();
 
@@ -247,6 +481,9 @@ BenchmarkResult benchmarkRestingInsert(
 
         auto end =
             Clock::now();
+
+
+        g_countAllocations = false;
 
 
         auto latency =
@@ -291,9 +528,14 @@ BenchmarkResult benchmarkRestingInsert(
     return calculateResult(
         "Resting Limit Insert",
         std::move(latencies),
+
         static_cast<std::uint64_t>(
             totalNanoseconds
-        )
+        ),
+
+        g_allocationCount,
+        g_deallocationCount,
+        g_allocatedBytes
     );
 }
 
@@ -306,13 +548,17 @@ BenchmarkResult benchmarkExactMatch(
     std::size_t numOrders
 ) {
 
-    OrderBook book;
+    OrderBook book(
+        numOrders
+    );
 
 
     OrderId nextOrderId = 1;
 
 
-    // Build a queue of resting sell orders.
+    // Build a large FIFO queue of resting sells.
+    //
+    // Again: setup is outside the measured region.
     for (
         std::size_t i = 0;
         i < numOrders;
@@ -330,7 +576,12 @@ BenchmarkResult benchmarkExactMatch(
 
     std::vector<std::uint64_t> latencies;
 
-    latencies.reserve(numOrders);
+    latencies.reserve(
+        numOrders
+    );
+
+
+    resetAllocationCounters();
 
 
     auto benchmarkStart =
@@ -351,6 +602,9 @@ BenchmarkResult benchmarkExactMatch(
         };
 
 
+        g_countAllocations = true;
+
+
         auto start =
             Clock::now();
 
@@ -361,6 +615,9 @@ BenchmarkResult benchmarkExactMatch(
 
         auto end =
             Clock::now();
+
+
+        g_countAllocations = false;
 
 
         auto latency =
@@ -408,12 +665,21 @@ BenchmarkResult benchmarkExactMatch(
     return calculateResult(
         "Exact Match",
         std::move(latencies),
+
         static_cast<std::uint64_t>(
             totalNanoseconds
-        )
+        ),
+
+        g_allocationCount,
+        g_deallocationCount,
+        g_allocatedBytes
     );
 }
 
+
+// =============================================
+// MAIN
+// =============================================
 
 int main() {
 

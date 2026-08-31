@@ -16,3 +16,5 @@ max   8500 ns
 
 
 likely issue: memory management or container growth or mix 
+
+fix: reserve memory upfront xs

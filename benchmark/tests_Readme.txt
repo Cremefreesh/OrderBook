@@ -92,3 +92,35 @@ Allocations: 100000
 Deallocations: 200001
 Allocated bytes: 3200000
 Allocations / operation: 1
+
+
+
+
+breakdown:
+Resting insert:
+200,001 allocations / 100,000 operations
+≈ 2 allocations per order
+
+Exact match:
+100,000 allocations / 100,000 operations
+= 1 allocation per order
+
+Exact match:
+200,001 deallocations
+≈ 2 deallocations per order
+
+BUY arrives
+    │
+    ├─ std::list creates Order node
+    │       └── ALLOCATION #1
+    │
+    └─ unordered_map creates OrderLocation node
+            └── ALLOCATION #2
+
+100,000 list allocations
++
+100,000 unordered_map node allocations
++
+1 container structural allocation
+=
+200,001

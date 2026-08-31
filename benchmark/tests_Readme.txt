@@ -54,3 +54,41 @@ Next culprit is per order heap allocation from our std::list
 when we are pushing back into our list, we are asking for more memory from the alocator 
 which needs contruction and then to be linked
 --> overhead i need to eliminate 
+
+
+
+1.3 
+
+Resting Limit Insert
+------------------------------
+Operations: 100000
+Throughput: 2.19264e+07 operations/sec
+Average latency: 30.6282 ns
+p50 latency: 41 ns
+p95 latency: 42 ns
+p99 latency: 42 ns
+p99.9 latency: 1042 ns
+Maximum latency: 11708 ns
+
+Memory activity
+Allocations: 200001
+Deallocations: 0
+Allocated bytes: 8800072
+Allocations / operation: 2.00001
+
+Exact Match
+------------------------------
+Operations: 100000
+Throughput: 1.6995e+07 operations/sec
+Average latency: 31.0637 ns
+p50 latency: 41 ns
+p95 latency: 42 ns
+p99 latency: 42 ns
+p99.9 latency: 125 ns
+Maximum latency: 2541 ns
+
+Memory activity
+Allocations: 100000
+Deallocations: 200001
+Allocated bytes: 3200000
+Allocations / operation: 1

@@ -1152,6 +1152,176 @@ void testZeroSnapshotDepthReturnsEmpty() {
     assert(asks.empty());
 }
 
+void testLimitOrderReportsRemainingQuantity() {
+    OrderBook book;
+
+
+    book.addLimitOrder({
+        1,
+        10005,
+        40,
+        Side::Sell
+    });
+
+
+    auto result =
+        book.addLimitOrder({
+            2,
+            10005,
+            100,
+            Side::Buy
+        });
+
+
+    assert(result.accepted());
+
+    assert(result.trades.size() == 1);
+
+    assert(
+        result.remainingQuantity ==
+        60
+    );
+
+
+    // The remaining 60 should have rested.
+    assert(book.bestBid() == 10005);
+}
+
+
+void testMarketOrderReportsUnfilledQuantity() {
+    OrderBook book;
+
+
+    book.addLimitOrder({
+        1,
+        10005,
+        30,
+        Side::Sell
+    });
+
+
+    auto result =
+        book.addMarketOrder(
+            2,
+            100,
+            Side::Buy
+        );
+
+
+    assert(result.accepted());
+
+    assert(
+        result.remainingQuantity ==
+        70
+    );
+
+
+    // Market remainder must not rest.
+    assert(book.bestBid() == 0);
+}
+
+
+void testIocReportsCancelledRemainder() {
+    OrderBook book;
+
+
+    book.addLimitOrder({
+        1,
+        10005,
+        25,
+        Side::Sell
+    });
+
+
+    auto result =
+        book.addImmediateOrCancelOrder({
+            2,
+            10005,
+            100,
+            Side::Buy
+        });
+
+
+    assert(result.accepted());
+
+    assert(
+        result.remainingQuantity ==
+        75
+    );
+
+
+    // IOC remainder disappears.
+    assert(book.bestBid() == 0);
+}
+
+
+void testFullyFilledOrderReportsZeroRemaining() {
+    OrderBook book;
+
+
+    book.addLimitOrder({
+        1,
+        10005,
+        100,
+        Side::Sell
+    });
+
+
+    auto result =
+        book.addMarketOrder(
+            2,
+            100,
+            Side::Buy
+        );
+
+
+    assert(result.accepted());
+
+    assert(
+        result.remainingQuantity ==
+        0
+    );
+}
+
+
+void testFailedFokReportsEntireQuantityRemaining() {
+    OrderBook book;
+
+
+    book.addLimitOrder({
+        1,
+        10005,
+        20,
+        Side::Sell
+    });
+
+
+    auto result =
+        book.addFillOrKillOrder({
+            2,
+            10005,
+            100,
+            Side::Buy
+        });
+
+
+    assert(
+        result.status ==
+        OrderStatus::InsufficientLiquidity
+    );
+
+
+    assert(
+        result.remainingQuantity ==
+        100
+    );
+
+
+    assert(result.trades.empty());
+}
+
+
+
 int main() {
 
     testNonCrossingOrders();
@@ -1191,6 +1361,12 @@ int main() {
     testIocRejectsInvalidPrice();
     testFokRejectsZeroQuantity();
     testInvalidModifyPriceDoesNotChangeOrder();
+
+    testLimitOrderReportsRemainingQuantity();
+    testMarketOrderReportsUnfilledQuantity();
+    testIocReportsCancelledRemainder();
+    testFullyFilledOrderReportsZeroRemaining();
+    testFailedFokReportsEntireQuantityRemaining();
 
 
     std::cout

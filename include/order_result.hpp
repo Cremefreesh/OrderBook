@@ -18,6 +18,7 @@ enum class OrderStatus {
 struct OrderResult {
     OrderStatus status;
     std::vector<Trade> trades;
+    Quantity remainingQuantity;
 
     bool accepted() const {
         return status == OrderStatus::Accepted;

@@ -23,6 +23,7 @@ Price OrderBook::bestAsk() const {
     return asks_.begin()->first;
 }
 
+
 std::vector<LevelSnapshot> OrderBook::topBids(
     std::size_t depth
 ) const {
@@ -369,13 +370,10 @@ OrderResult OrderBook::addLimitOrder(Order order) {
 
     OrderResult result {
         OrderStatus::Accepted,
-        {}
+        {},
+        order.quantity
     };
 
-
-    // -----------------------------------------
-    // Validate quantity
-    // -----------------------------------------
 
     if (order.quantity == 0) {
 
@@ -386,10 +384,6 @@ OrderResult OrderBook::addLimitOrder(Order order) {
     }
 
 
-    // -----------------------------------------
-    // Validate price
-    // -----------------------------------------
-
     if (order.price <= 0) {
 
         result.status =
@@ -398,10 +392,6 @@ OrderResult OrderBook::addLimitOrder(Order order) {
         return result;
     }
 
-
-    // -----------------------------------------
-    // Reject duplicate active ID
-    // -----------------------------------------
 
     if (
         orderIndex_.find(order.id) !=
@@ -414,10 +404,6 @@ OrderResult OrderBook::addLimitOrder(Order order) {
         return result;
     }
 
-
-    // =========================================
-    // BUY LIMIT
-    // =========================================
 
     if (order.side == Side::Buy) {
 
@@ -498,11 +484,6 @@ OrderResult OrderBook::addLimitOrder(Order order) {
             }
         }
     }
-
-
-    // =========================================
-    // SELL LIMIT
-    // =========================================
 
     else {
 
@@ -585,6 +566,10 @@ OrderResult OrderBook::addLimitOrder(Order order) {
     }
 
 
+    result.remainingQuantity =
+        order.quantity;
+
+
     return result;
 }
 
@@ -601,12 +586,11 @@ OrderResult OrderBook::addMarketOrder(
 
     OrderResult result {
         OrderStatus::Accepted,
-        {}
+        {},
+        quantity
     };
 
 
-    // Market orders have no limit price,
-    // but quantity still must be valid.
     if (quantity == 0) {
 
         result.status =
@@ -651,6 +635,10 @@ OrderResult OrderBook::addMarketOrder(
     }
 
 
+    result.remainingQuantity =
+        quantity;
+
+
     return result;
 }
 
@@ -665,7 +653,8 @@ OrderResult OrderBook::addImmediateOrCancelOrder(
 
     OrderResult result {
         OrderStatus::Accepted,
-        {}
+        {},
+        order.quantity
     };
 
 
@@ -722,6 +711,10 @@ OrderResult OrderBook::addImmediateOrCancelOrder(
     }
 
 
+    result.remainingQuantity =
+        order.quantity;
+
+
     return result;
 }
 
@@ -736,13 +729,10 @@ OrderResult OrderBook::addFillOrKillOrder(
 
     OrderResult result {
         OrderStatus::Accepted,
-        {}
+        {},
+        order.quantity
     };
 
-
-    // -----------------------------------------
-    // Validate quantity
-    // -----------------------------------------
 
     if (order.quantity == 0) {
 
@@ -753,10 +743,6 @@ OrderResult OrderBook::addFillOrKillOrder(
     }
 
 
-    // -----------------------------------------
-    // Validate price
-    // -----------------------------------------
-
     if (order.price <= 0) {
 
         result.status =
@@ -765,10 +751,6 @@ OrderResult OrderBook::addFillOrKillOrder(
         return result;
     }
 
-
-    // -----------------------------------------
-    // Reject duplicate active ID
-    // -----------------------------------------
 
     if (
         orderIndex_.find(order.id) !=
@@ -834,6 +816,10 @@ OrderResult OrderBook::addFillOrKillOrder(
             result
         );
     }
+
+
+    result.remainingQuantity =
+        order.quantity;
 
 
     return result;
@@ -941,7 +927,8 @@ OrderResult OrderBook::modifyOrder(
 
         return {
             OrderStatus::OrderNotFound,
-            {}
+            {},
+            newQuantity
         };
     }
 
@@ -954,30 +941,24 @@ OrderResult OrderBook::modifyOrder(
         *location.orderIt;
 
 
-    // Quantity zero intentionally means:
-    //
-    // cancel the existing order.
-    //
-    // So zero is VALID here even though it is
-    // invalid when submitting a new order.
     if (newQuantity == 0) {
 
         cancelOrder(id);
 
         return {
             OrderStatus::Accepted,
-            {}
+            {},
+            0
         };
     }
 
 
-    // Any non-cancellation modification
-    // requires a valid price.
     if (newPrice <= 0) {
 
         return {
             OrderStatus::InvalidPrice,
-            {}
+            {},
+            newQuantity
         };
     }
 
@@ -992,7 +973,8 @@ OrderResult OrderBook::modifyOrder(
 
         return {
             OrderStatus::Accepted,
-            {}
+            {},
+            newQuantity
         };
     }
 
@@ -1009,7 +991,8 @@ OrderResult OrderBook::modifyOrder(
 
         return {
             OrderStatus::OrderNotFound,
-            {}
+            {},
+            newQuantity
         };
     }
 

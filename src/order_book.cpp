@@ -5,6 +5,17 @@
 #include <iterator>
 #include <utility>
 
+OrderBook::OrderBook(
+    std::size_t expectedActiveOrders
+) {
+
+    if (expectedActiveOrders > 0) {
+
+        orderIndex_.reserve(
+            expectedActiveOrders
+        );
+    }
+}
 
 Price OrderBook::bestBid() const {
     if (bids_.empty()) {

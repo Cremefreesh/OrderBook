@@ -21,6 +21,10 @@ struct LevelSnapshot {
 
 class OrderBook {
 public:
+    explicit OrderBook(
+        std::size_t expectedActiveOrders = 0
+    );
+
     OrderResult addLimitOrder(Order order);
 
     OrderResult addMarketOrder(

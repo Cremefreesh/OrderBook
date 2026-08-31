@@ -186,7 +186,9 @@ BenchmarkResult benchmarkRestingInsert(
     std::size_t numOrders
 ) {
 
-    OrderBook book;
+    OrderBook book(
+        numOrders + 1000
+    );
 
 
     OrderId nextOrderId = 1;

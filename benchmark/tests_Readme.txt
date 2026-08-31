@@ -13,3 +13,6 @@ p95     84 ns
 p99     84 ns
 p99.9  209 ns
 max   8500 ns
+
+
+likely issue: memory management or container growth or mix 

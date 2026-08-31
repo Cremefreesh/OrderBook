@@ -50,3 +50,7 @@ Maximum latency: 12167 ns
 
 issues: long tail was not just rehashing, max did drop but other issues present. 
 Next culprit is per order heap allocation from our std::list 
+
+when we are pushing back into our list, we are asking for more memory from the alocator 
+which needs contruction and then to be linked
+--> overhead i need to eliminate 

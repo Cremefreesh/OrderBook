@@ -65,11 +65,13 @@ CMAKE_BINARY_DIR = "/Users/archie/Documents/VS Projects/OrderBook/build"
 # The main recursive "all" target.
 all: CMakeFiles/orderbook.dir/all
 all: CMakeFiles/orderbook_tests.dir/all
+all: CMakeFiles/orderbook_benchmark.dir/all
 .PHONY : all
 
 # The main recursive "codegen" target.
 codegen: CMakeFiles/orderbook.dir/codegen
 codegen: CMakeFiles/orderbook_tests.dir/codegen
+codegen: CMakeFiles/orderbook_benchmark.dir/codegen
 .PHONY : codegen
 
 # The main recursive "preinstall" target.
@@ -79,6 +81,7 @@ preinstall:
 # The main recursive "clean" target.
 clean: CMakeFiles/orderbook.dir/clean
 clean: CMakeFiles/orderbook_tests.dir/clean
+clean: CMakeFiles/orderbook_benchmark.dir/clean
 .PHONY : clean
 
 #=============================================================================
@@ -120,7 +123,7 @@ CMakeFiles/orderbook.dir/clean:
 CMakeFiles/orderbook_tests.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/orderbook_tests.dir/build.make CMakeFiles/orderbook_tests.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/orderbook_tests.dir/build.make CMakeFiles/orderbook_tests.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir="/Users/archie/Documents/VS Projects/OrderBook/build/CMakeFiles" --progress-num=4,5,6 "Built target orderbook_tests"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir="/Users/archie/Documents/VS Projects/OrderBook/build/CMakeFiles" --progress-num=7,8,9 "Built target orderbook_tests"
 .PHONY : CMakeFiles/orderbook_tests.dir/all
 
 # Build rule for subdir invocation for target.
@@ -137,13 +140,45 @@ orderbook_tests: CMakeFiles/orderbook_tests.dir/rule
 # codegen rule for target.
 CMakeFiles/orderbook_tests.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/orderbook_tests.dir/build.make CMakeFiles/orderbook_tests.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir="/Users/archie/Documents/VS Projects/OrderBook/build/CMakeFiles" --progress-num=4,5,6 "Finished codegen for target orderbook_tests"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir="/Users/archie/Documents/VS Projects/OrderBook/build/CMakeFiles" --progress-num=7,8,9 "Finished codegen for target orderbook_tests"
 .PHONY : CMakeFiles/orderbook_tests.dir/codegen
 
 # clean rule for target.
 CMakeFiles/orderbook_tests.dir/clean:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/orderbook_tests.dir/build.make CMakeFiles/orderbook_tests.dir/clean
 .PHONY : CMakeFiles/orderbook_tests.dir/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/orderbook_benchmark.dir
+
+# All Build rule for target.
+CMakeFiles/orderbook_benchmark.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/orderbook_benchmark.dir/build.make CMakeFiles/orderbook_benchmark.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/orderbook_benchmark.dir/build.make CMakeFiles/orderbook_benchmark.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir="/Users/archie/Documents/VS Projects/OrderBook/build/CMakeFiles" --progress-num=4,5,6 "Built target orderbook_benchmark"
+.PHONY : CMakeFiles/orderbook_benchmark.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/orderbook_benchmark.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start "/Users/archie/Documents/VS Projects/OrderBook/build/CMakeFiles" 3
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/orderbook_benchmark.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start "/Users/archie/Documents/VS Projects/OrderBook/build/CMakeFiles" 0
+.PHONY : CMakeFiles/orderbook_benchmark.dir/rule
+
+# Convenience name for target.
+orderbook_benchmark: CMakeFiles/orderbook_benchmark.dir/rule
+.PHONY : orderbook_benchmark
+
+# codegen rule for target.
+CMakeFiles/orderbook_benchmark.dir/codegen:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/orderbook_benchmark.dir/build.make CMakeFiles/orderbook_benchmark.dir/codegen
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir="/Users/archie/Documents/VS Projects/OrderBook/build/CMakeFiles" --progress-num=4,5,6 "Finished codegen for target orderbook_benchmark"
+.PHONY : CMakeFiles/orderbook_benchmark.dir/codegen
+
+# clean rule for target.
+CMakeFiles/orderbook_benchmark.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/orderbook_benchmark.dir/build.make CMakeFiles/orderbook_benchmark.dir/clean
+.PHONY : CMakeFiles/orderbook_benchmark.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.

@@ -142,6 +142,43 @@ orderbook_tests/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/orderbook_tests.dir/build.make CMakeFiles/orderbook_tests.dir/build
 .PHONY : orderbook_tests/fast
 
+#=============================================================================
+# Target rules for targets named orderbook_benchmark
+
+# Build rule for target.
+orderbook_benchmark: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 orderbook_benchmark
+.PHONY : orderbook_benchmark
+
+# fast build rule for target.
+orderbook_benchmark/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/orderbook_benchmark.dir/build.make CMakeFiles/orderbook_benchmark.dir/build
+.PHONY : orderbook_benchmark/fast
+
+benchmark/order_book_benchmark.o: benchmark/order_book_benchmark.cpp.o
+.PHONY : benchmark/order_book_benchmark.o
+
+# target to build an object file
+benchmark/order_book_benchmark.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/orderbook_benchmark.dir/build.make CMakeFiles/orderbook_benchmark.dir/benchmark/order_book_benchmark.cpp.o
+.PHONY : benchmark/order_book_benchmark.cpp.o
+
+benchmark/order_book_benchmark.i: benchmark/order_book_benchmark.cpp.i
+.PHONY : benchmark/order_book_benchmark.i
+
+# target to preprocess a source file
+benchmark/order_book_benchmark.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/orderbook_benchmark.dir/build.make CMakeFiles/orderbook_benchmark.dir/benchmark/order_book_benchmark.cpp.i
+.PHONY : benchmark/order_book_benchmark.cpp.i
+
+benchmark/order_book_benchmark.s: benchmark/order_book_benchmark.cpp.s
+.PHONY : benchmark/order_book_benchmark.s
+
+# target to generate assembly for a file
+benchmark/order_book_benchmark.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/orderbook_benchmark.dir/build.make CMakeFiles/orderbook_benchmark.dir/benchmark/order_book_benchmark.cpp.s
+.PHONY : benchmark/order_book_benchmark.cpp.s
+
 src/main.o: src/main.cpp.o
 .PHONY : src/main.o
 
@@ -173,6 +210,7 @@ src/order_book.o: src/order_book.cpp.o
 src/order_book.cpp.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/orderbook.dir/build.make CMakeFiles/orderbook.dir/src/order_book.cpp.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/orderbook_tests.dir/build.make CMakeFiles/orderbook_tests.dir/src/order_book.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/orderbook_benchmark.dir/build.make CMakeFiles/orderbook_benchmark.dir/src/order_book.cpp.o
 .PHONY : src/order_book.cpp.o
 
 src/order_book.i: src/order_book.cpp.i
@@ -182,6 +220,7 @@ src/order_book.i: src/order_book.cpp.i
 src/order_book.cpp.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/orderbook.dir/build.make CMakeFiles/orderbook.dir/src/order_book.cpp.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/orderbook_tests.dir/build.make CMakeFiles/orderbook_tests.dir/src/order_book.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/orderbook_benchmark.dir/build.make CMakeFiles/orderbook_benchmark.dir/src/order_book.cpp.i
 .PHONY : src/order_book.cpp.i
 
 src/order_book.s: src/order_book.cpp.s
@@ -191,6 +230,7 @@ src/order_book.s: src/order_book.cpp.s
 src/order_book.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/orderbook.dir/build.make CMakeFiles/orderbook.dir/src/order_book.cpp.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/orderbook_tests.dir/build.make CMakeFiles/orderbook_tests.dir/src/order_book.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/orderbook_benchmark.dir/build.make CMakeFiles/orderbook_benchmark.dir/src/order_book.cpp.s
 .PHONY : src/order_book.cpp.s
 
 tests/order_book_tests.o: tests/order_book_tests.cpp.o
@@ -226,7 +266,11 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... orderbook"
+	@echo "... orderbook_benchmark"
 	@echo "... orderbook_tests"
+	@echo "... benchmark/order_book_benchmark.o"
+	@echo "... benchmark/order_book_benchmark.i"
+	@echo "... benchmark/order_book_benchmark.s"
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"

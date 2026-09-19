@@ -231,15 +231,6 @@ OrderBook_IS_TOP_LEVEL:STATIC=ON
 //Value Computed by CMake
 OrderBook_SOURCE_DIR:STATIC=/Users/archie/Documents/VS Projects/OrderBook
 
-//Value Computed by CMake
-Project_BINARY_DIR:STATIC=/Users/archie/Documents/VS Projects/OrderBook/build
-
-//Value Computed by CMake
-Project_IS_TOP_LEVEL:STATIC=ON
-
-//Value Computed by CMake
-Project_SOURCE_DIR:STATIC=/Users/archie/Documents/VS Projects/OrderBook
-
 
 ########################
 # INTERNAL cache entries

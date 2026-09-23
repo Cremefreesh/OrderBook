@@ -63,3 +63,17 @@ private:
 //head_        consumer            producer
 
 //tail_        producer            consumer
+
+
+/*
+THREAD A                         THREAD B
+
+write useful data
+      │
+      ▼
+release STORE ───────────────► acquire LOAD
+                                    │
+                                    ▼
+                             safely observe
+                             preceding effects
+*/

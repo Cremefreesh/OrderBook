@@ -76,4 +76,17 @@ release STORE ───────────────► acquire LOAD
                                     ▼
                              safely observe
                              preceding effects
-*/
+
+
+A Single-Producer Single-Consumer (SPSC) lock-free ring buffer is a high-performance data 
+structure used to pass data safely between two threads without using traditional 
+locking primitives like mutexes.
+How It WorksRing Buffer: 
+A fixed-size array functioning as a circular queue where write and read indices wrap around to the beginning when 
+ reaching the end.
+Single-Producer Single-Consumer (SPSC): Exactly one thread writes data (the producer) 
+ and exactly one thread reads data (the consumer).
+Lock-Free: Coordination happens via 
+ atomic index variables and memory barriers rather than operating system blocking locks
+
+ */

@@ -53,8 +53,8 @@ private:
     //head = next element the consumer reads
     //tail = next position the producer writes
     //head for removing, tail for inserting
-    std::atomic<std::size_t> head_{0};
-    std::atomic<std::size_t> tail_{0};
+    alignas(64) std::atomic<std::size_t> head_{0};
+    alignas(64) std::atomic<std::size_t> tail_{0};
 };
 
 

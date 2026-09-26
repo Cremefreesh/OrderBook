@@ -124,7 +124,116 @@ OrderCancel Parser::parse_order_cancel(
     return message;
 }
 
+OrderDelete Parser::parse_order_delete(
+    std::span<const std::uint8_t> bytes
+) const {
+    if (bytes.size() != 19) {
+        throw std::runtime_error(
+            "Invalid ITCH Order Delete message size"
+        );
+    }
 
+    if (bytes[0] != 'D') {
+        throw std::runtime_error(
+            "Expected ITCH Order Delete message"
+        );
+    }
+
+    OrderDelete message{};
+
+    message.stock_locate =
+        read_u16(bytes.data() + 1);
+
+    message.tracking_number =
+        read_u16(bytes.data() + 3);
+
+    message.timestamp_ns =
+        read_u48(bytes.data() + 5);
+
+    message.order_reference =
+        read_u64(bytes.data() + 11);
+
+    return message;
+}
+
+OrderExecuted Parser::parse_order_executed(
+    std::span<const std::uint8_t> bytes
+) const {
+    if (bytes.size() != 31) {
+        throw std::runtime_error(
+            "Invalid ITCH Order Executed message size"
+        );
+    }
+
+    if (bytes[0] != 'E') {
+        throw std::runtime_error(
+            "Expected ITCH Order Executed message"
+        );
+    }
+
+    OrderExecuted message{};
+
+    message.stock_locate =
+        read_u16(bytes.data() + 1);
+
+    message.tracking_number =
+        read_u16(bytes.data() + 3);
+
+    message.timestamp_ns =
+        read_u48(bytes.data() + 5);
+
+    message.order_reference =
+        read_u64(bytes.data() + 11);
+
+    message.executed_shares =
+        read_u32(bytes.data() + 19);
+
+    message.match_number =
+        read_u64(bytes.data() + 23);
+
+    return message;
+}
+
+OrderReplace Parser::parse_order_replace(
+    std::span<const std::uint8_t> bytes
+) const {
+    if (bytes.size() != 35) {
+        throw std::runtime_error(
+            "Invalid ITCH Order Replace message size"
+        );
+    }
+
+    if (bytes[0] != 'U') {
+        throw std::runtime_error(
+            "Expected ITCH Order Replace message"
+        );
+    }
+
+    OrderReplace message{};
+
+    message.stock_locate =
+        read_u16(bytes.data() + 1);
+
+    message.tracking_number =
+        read_u16(bytes.data() + 3);
+
+    message.timestamp_ns =
+        read_u48(bytes.data() + 5);
+
+    message.original_order_reference =
+        read_u64(bytes.data() + 11);
+
+    message.new_order_reference =
+        read_u64(bytes.data() + 19);
+
+    message.shares =
+        read_u32(bytes.data() + 27);
+
+    message.price =
+        read_u32(bytes.data() + 31);
+
+    return message;
+}
 
 }
 
@@ -150,6 +259,41 @@ cancel order format
 11-18   order reference
 19-22   cancelled shares
 
+order delete format
+0       'D'
+1-2     stock locate
+3-4     tracking number
+5-10    timestamp
+11-18   order reference
+
+order executed format
+order #123
+100 shares
+    ↓
+
+E says 40 shares executed
+    ↓
+
+60 shares remain
+
+
+order replace format
+OLD:
+
+order #100
+BUY AAPL
+100 shares
+$200
+
+        U
+        ↓
+
+NEW:
+
+order #500
+BUY AAPL
+150 shares
+$199.50
 */
 
 

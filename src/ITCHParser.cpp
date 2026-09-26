@@ -1,4 +1,6 @@
 #include "protocols/ITCHParser.hpp"
+#include <stdexcept>
+
 
 namespace itch {
 
@@ -42,6 +44,19 @@ std::uint64_t Parser::read_u64(const std::uint8_t* data) {
 AddOrder Parser::parse_add_order(
     std::span<const std::uint8_t> bytes
 ) const {
+     
+    if (bytes.size() != 36) {
+        throw std::runtime_error(
+            "Invalid ITCH Add Order message size"
+        );
+    }
+
+    if (bytes[0] != 'A') {
+        throw std::runtime_error(
+            "Expected ITCH Add Order message"
+        );
+    }
+
     AddOrder message{};
 
     message.stock_locate =

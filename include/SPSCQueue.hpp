@@ -27,12 +27,12 @@ public:
 
 
 
-    //autofilled by vs code --> check
+    
     bool pop(T& value) {
         const auto head = head_.load(std::memory_order_relaxed);
         const auto next_head = (head + 1) % Capacity;
 
-        if (next_head == tail_.load(std::memory_order_acquire)) {
+        if (head == tail_.load(std::memory_order_acquire)) {
             return false;
         }
 
@@ -41,7 +41,7 @@ public:
         return true;
     }
 
-    //autofilled by vs code --> check
+    
     bool empty() const {
         return head_.load(std::memory_order_acquire) == tail_.load(std::memory_order_acquire);
     }

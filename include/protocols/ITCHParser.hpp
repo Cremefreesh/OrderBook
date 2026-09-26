@@ -33,3 +33,19 @@ private:
 };
 
 }
+
+
+/*
+| Type | Message | Use Case |
+|---|---|---|
+| `A` | Add Order | New visible order enters book |
+| `F` | Add Order with MPID Attribution | Same idea, but includes participant attribution |
+| `E` | Order Executed | Some/all of an existing order trades |
+| `C` | Order Executed With Price | Execution where trade price is explicitly supplied |
+| `X` | Order Cancel | Reduce quantity of an existing order |
+| `D` | Order Delete | Remove an order entirely |
+| `U` | Order Replace | Replace order with new ID / quantity / price |
+| `P` | Trade | Trade against a non-displayable order |
+| `Q` | Cross Trade | Opening/closing/etc. cross transaction |
+| `B` | Broken Trade | Previously reported trade is broken/cancelled |
+*/

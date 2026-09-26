@@ -18,6 +18,18 @@ public:
         std::span<const std::uint8_t> bytes
     ) const;
 
+    OrderDelete parse_order_delete(
+    std::span<const std::uint8_t> bytes
+    ) const;
+
+    OrderExecuted parse_order_executed(
+        std::span<const std::uint8_t> bytes
+    ) const;
+
+    OrderReplace parse_order_replace(
+        std::span<const std::uint8_t> bytes
+    ) const;
+
 private:
     static std::uint16_t read_u16(
         const std::uint8_t* data

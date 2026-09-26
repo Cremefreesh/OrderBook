@@ -1,24 +1,29 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 
 namespace itch {
 
-enum class Side : std::uint8_t {
-    Buy,
-    Sell
+enum class Side : char {
+    Buy  = 'B',
+    Sell = 'S'
 };
 
 struct AddOrder {
-    std::uint64_t order_id;
-    std::uint32_t quantity;
-    std::uint32_t price;
-    Side side;
-};
+    std::uint16_t stock_locate{};
+    std::uint16_t tracking_number{};
 
-struct CancelOrder {
-    std::uint64_t order_id;
-    std::uint32_t quantity;
+    std::uint64_t timestamp_ns{};
+
+    std::uint64_t order_reference{};
+    Side side{};
+
+    std::uint32_t shares{};
+
+    std::array<char, 8> stock{};
+
+    std::uint32_t price{};
 };
 
 }

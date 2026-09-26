@@ -47,3 +47,12 @@ add_executable(SPSCQueue_tests
 )
 
 target_include_directories(SPSCQueue_tests PRIVATE include)
+
+add_executable(ITCHParser_tests
+    tests/ITCHParser_tests.cpp
+    src/ITCHParser.cpp
+)
+
+target_include_directories(ITCHParser_tests PRIVATE include)
+
+target_compile_features(ITCHParser_tests PRIVATE cxx_std_20)

@@ -38,4 +38,16 @@ std::uint64_t Parser::read_u64(const std::uint8_t* data) {
         (static_cast<std::uint64_t>(data[7]));
 }
 
+
+AddOrder Parser::parse_add_order(
+    std::span<const std::uint8_t> bytes
+) const {
+    AddOrder message{};
+
+    return message;
+}
+
+
+
+
 }

@@ -40,3 +40,9 @@ target_include_directories(
     PRIVATE
     include
 )
+
+add_executable(SPSCQueue_tests
+        tests/SPSCQueue_tests.cpp
+)
+
+target_include_directories(SPSCQueue_tests PRIVATE include)

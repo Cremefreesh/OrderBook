@@ -14,6 +14,10 @@ public:
         std::span<const std::uint8_t> bytes
     ) const;
 
+    OrderCancel parse_order_cancel(
+        std::span<const std::uint8_t> bytes
+    ) const;
+
 private:
     static std::uint16_t read_u16(
         const std::uint8_t* data
@@ -31,6 +35,9 @@ private:
         const std::uint8_t* data
     );
 };
+
+
+
 
 }
 

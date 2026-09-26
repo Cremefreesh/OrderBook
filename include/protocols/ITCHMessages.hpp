@@ -26,4 +26,15 @@ struct AddOrder {
     std::uint32_t price{};
 };
 
+struct OrderCancel {
+    std::uint16_t stock_locate{};
+    std::uint16_t tracking_number{};
+    std::uint64_t timestamp_ns{};
+
+    std::uint64_t order_reference{};
+    std::uint32_t cancelled_shares{};
+};
+
+
+
 }

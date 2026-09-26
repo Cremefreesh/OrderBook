@@ -89,6 +89,42 @@ AddOrder Parser::parse_add_order(
 }
 
 
+OrderCancel Parser::parse_order_cancel(
+    std::span<const std::uint8_t> bytes
+) const {
+    if (bytes.size() != 23) {
+        throw std::runtime_error(
+            "Invalid ITCH Order Cancel message size"
+        );
+    }
+
+    if (bytes[0] != 'X') {
+        throw std::runtime_error(
+            "Expected ITCH Order Cancel message"
+        );
+    }
+
+    OrderCancel message{};
+
+    message.stock_locate =
+        read_u16(bytes.data() + 1);
+
+    message.tracking_number =
+        read_u16(bytes.data() + 3);
+
+    message.timestamp_ns =
+        read_u48(bytes.data() + 5);
+
+    message.order_reference =
+        read_u64(bytes.data() + 11);
+
+    message.cancelled_shares =
+        read_u32(bytes.data() + 19);
+
+    return message;
+}
+
+
 
 }
 

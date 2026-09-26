@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cstdint>
+#include <variant>
 
 namespace itch {
 
@@ -63,6 +64,14 @@ struct OrderReplace {
     std::uint32_t shares{};
     std::uint32_t price{};
 };
+
+using Message = std::variant<
+    AddOrder,
+    OrderCancel,
+    OrderDelete,
+    OrderExecuted,
+    OrderReplace
+>;
 
 
 }

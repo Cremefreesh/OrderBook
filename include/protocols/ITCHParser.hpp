@@ -30,6 +30,10 @@ public:
         std::span<const std::uint8_t> bytes
     ) const;
 
+    Message parse_message(
+        std::span<const std::uint8_t> bytes
+    ) const;
+
 private:
     static std::uint16_t read_u16(
         const std::uint8_t* data
@@ -46,9 +50,10 @@ private:
     static std::uint64_t read_u64(
         const std::uint8_t* data
     );
+
+   
+
 };
-
-
 
 
 }

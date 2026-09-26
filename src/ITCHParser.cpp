@@ -235,6 +235,37 @@ OrderReplace Parser::parse_order_replace(
     return message;
 }
 
+Message Parser::parse_message(
+    std::span<const std::uint8_t> bytes
+) const {
+    if (bytes.empty()) {
+        throw std::runtime_error("Empty ITCH message");
+    }
+
+    switch (bytes[0]) {
+        case 'A':
+            return parse_add_order(bytes);
+
+        case 'X':
+            return parse_order_cancel(bytes);
+
+        case 'D':
+            return parse_order_delete(bytes);
+
+        case 'E':
+            return parse_order_executed(bytes);
+
+        case 'U':
+            return parse_order_replace(bytes);
+
+        default:
+            throw std::runtime_error(
+                "Unsupported ITCH message type"
+            );
+    }
+}
+
+
 }
 
 
@@ -278,22 +309,7 @@ E says 40 shares executed
 
 
 order replace format
-OLD:
 
-order #100
-BUY AAPL
-100 shares
-$200
-
-        U
-        ↓
-
-NEW:
-
-order #500
-BUY AAPL
-150 shares
-$199.50
 */
 
 

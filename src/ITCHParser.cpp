@@ -130,6 +130,7 @@ OrderCancel Parser::parse_order_cancel(
 
 
 /*
+add order message format:
 0      message type ('A')
 1-2    stock locate
 3-4    tracking number
@@ -139,4 +140,16 @@ OrderCancel Parser::parse_order_cancel(
 20-23  shares
 24-31  stock
 32-35  price
+
+cancel order format 
+
+0       type = 'X'
+1-2     stock locate
+3-4     tracking number
+5-10    timestamp
+11-18   order reference
+19-22   cancelled shares
+
 */
+
+

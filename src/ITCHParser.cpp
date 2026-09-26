@@ -44,10 +44,48 @@ AddOrder Parser::parse_add_order(
 ) const {
     AddOrder message{};
 
+    message.stock_locate =
+        read_u16(bytes.data() + 1);
+
+    message.tracking_number =
+        read_u16(bytes.data() + 3);
+
+    message.timestamp_ns =
+        read_u48(bytes.data() + 5);
+
+    message.order_reference =
+        read_u64(bytes.data() + 11);
+
+    message.side =
+        static_cast<Side>(bytes[19]);
+
+    message.shares =
+        read_u32(bytes.data() + 20);
+
+    for (std::size_t i = 0; i < 8; ++i) {
+        message.stock[i] =
+            static_cast<char>(bytes[24 + i]);
+    }
+
+    message.price =
+        read_u32(bytes.data() + 32);
+
     return message;
 }
 
 
 
-
 }
+
+
+/*
+0      message type ('A')
+1-2    stock locate
+3-4    tracking number
+5-10   timestamp
+11-18  order reference
+19     side
+20-23  shares
+24-31  stock
+32-35  price
+*/

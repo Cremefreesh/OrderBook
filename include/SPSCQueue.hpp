@@ -89,4 +89,16 @@ Single-Producer Single-Consumer (SPSC): Exactly one thread writes data (the prod
 Lock-Free: Coordination happens via 
  atomic index variables and memory barriers rather than operating system blocking locks
 
- */
+ SPSCQueue<T, Capacity>
+
+✓ fixed-capacity
+✓ preallocated storage
+✓ no mutex
+✓ no allocation during push/pop
+✓ atomic producer/consumer synchronization
+✓ acquire/release ordering
+✓ circular storage
+✓ FIFO
+✓ cache-line-separated indices
+
+*/

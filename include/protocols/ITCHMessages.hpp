@@ -35,6 +35,34 @@ struct OrderCancel {
     std::uint32_t cancelled_shares{};
 };
 
+struct OrderDelete {
+    std::uint16_t stock_locate{};
+    std::uint16_t tracking_number{};
+    std::uint64_t timestamp_ns{};
+    std::uint64_t order_reference{};
+};
+
+struct OrderExecuted {
+    std::uint16_t stock_locate{};
+    std::uint16_t tracking_number{};
+    std::uint64_t timestamp_ns{};
+
+    std::uint64_t order_reference{};
+    std::uint32_t executed_shares{};
+    std::uint64_t match_number{};
+};
+
+struct OrderReplace {
+    std::uint16_t stock_locate{};
+    std::uint16_t tracking_number{};
+    std::uint64_t timestamp_ns{};
+
+    std::uint64_t original_order_reference{};
+    std::uint64_t new_order_reference{};
+
+    std::uint32_t shares{};
+    std::uint32_t price{};
+};
 
 
 }

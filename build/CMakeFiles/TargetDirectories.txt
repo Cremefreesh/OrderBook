@@ -1,5 +1,7 @@
 /Users/archie/Documents/VS Projects/OrderBook/build/CMakeFiles/orderbook.dir
 /Users/archie/Documents/VS Projects/OrderBook/build/CMakeFiles/orderbook_tests.dir
 /Users/archie/Documents/VS Projects/OrderBook/build/CMakeFiles/orderbook_benchmark.dir
+/Users/archie/Documents/VS Projects/OrderBook/build/CMakeFiles/SPSCQueue_tests.dir
+/Users/archie/Documents/VS Projects/OrderBook/build/CMakeFiles/ITCHParser_tests.dir
 /Users/archie/Documents/VS Projects/OrderBook/build/CMakeFiles/edit_cache.dir
 /Users/archie/Documents/VS Projects/OrderBook/build/CMakeFiles/rebuild_cache.dir

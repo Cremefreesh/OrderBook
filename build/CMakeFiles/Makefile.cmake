@@ -59,4 +59,6 @@ set(CMAKE_DEPEND_INFO_FILES
   "CMakeFiles/orderbook.dir/DependInfo.cmake"
   "CMakeFiles/orderbook_tests.dir/DependInfo.cmake"
   "CMakeFiles/orderbook_benchmark.dir/DependInfo.cmake"
+  "CMakeFiles/SPSCQueue_tests.dir/DependInfo.cmake"
+  "CMakeFiles/ITCHParser_tests.dir/DependInfo.cmake"
   )

@@ -155,6 +155,32 @@ orderbook_benchmark/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/orderbook_benchmark.dir/build.make CMakeFiles/orderbook_benchmark.dir/build
 .PHONY : orderbook_benchmark/fast
 
+#=============================================================================
+# Target rules for targets named SPSCQueue_tests
+
+# Build rule for target.
+SPSCQueue_tests: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 SPSCQueue_tests
+.PHONY : SPSCQueue_tests
+
+# fast build rule for target.
+SPSCQueue_tests/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SPSCQueue_tests.dir/build.make CMakeFiles/SPSCQueue_tests.dir/build
+.PHONY : SPSCQueue_tests/fast
+
+#=============================================================================
+# Target rules for targets named ITCHParser_tests
+
+# Build rule for target.
+ITCHParser_tests: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ITCHParser_tests
+.PHONY : ITCHParser_tests
+
+# fast build rule for target.
+ITCHParser_tests/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ITCHParser_tests.dir/build.make CMakeFiles/ITCHParser_tests.dir/build
+.PHONY : ITCHParser_tests/fast
+
 benchmark/order_book_benchmark.o: benchmark/order_book_benchmark.cpp.o
 .PHONY : benchmark/order_book_benchmark.o
 
@@ -178,6 +204,30 @@ benchmark/order_book_benchmark.s: benchmark/order_book_benchmark.cpp.s
 benchmark/order_book_benchmark.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/orderbook_benchmark.dir/build.make CMakeFiles/orderbook_benchmark.dir/benchmark/order_book_benchmark.cpp.s
 .PHONY : benchmark/order_book_benchmark.cpp.s
+
+src/ITCHParser.o: src/ITCHParser.cpp.o
+.PHONY : src/ITCHParser.o
+
+# target to build an object file
+src/ITCHParser.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ITCHParser_tests.dir/build.make CMakeFiles/ITCHParser_tests.dir/src/ITCHParser.cpp.o
+.PHONY : src/ITCHParser.cpp.o
+
+src/ITCHParser.i: src/ITCHParser.cpp.i
+.PHONY : src/ITCHParser.i
+
+# target to preprocess a source file
+src/ITCHParser.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ITCHParser_tests.dir/build.make CMakeFiles/ITCHParser_tests.dir/src/ITCHParser.cpp.i
+.PHONY : src/ITCHParser.cpp.i
+
+src/ITCHParser.s: src/ITCHParser.cpp.s
+.PHONY : src/ITCHParser.s
+
+# target to generate assembly for a file
+src/ITCHParser.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ITCHParser_tests.dir/build.make CMakeFiles/ITCHParser_tests.dir/src/ITCHParser.cpp.s
+.PHONY : src/ITCHParser.cpp.s
 
 src/main.o: src/main.cpp.o
 .PHONY : src/main.o
@@ -233,6 +283,54 @@ src/order_book.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/orderbook_benchmark.dir/build.make CMakeFiles/orderbook_benchmark.dir/src/order_book.cpp.s
 .PHONY : src/order_book.cpp.s
 
+tests/ITCHParser_tests.o: tests/ITCHParser_tests.cpp.o
+.PHONY : tests/ITCHParser_tests.o
+
+# target to build an object file
+tests/ITCHParser_tests.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ITCHParser_tests.dir/build.make CMakeFiles/ITCHParser_tests.dir/tests/ITCHParser_tests.cpp.o
+.PHONY : tests/ITCHParser_tests.cpp.o
+
+tests/ITCHParser_tests.i: tests/ITCHParser_tests.cpp.i
+.PHONY : tests/ITCHParser_tests.i
+
+# target to preprocess a source file
+tests/ITCHParser_tests.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ITCHParser_tests.dir/build.make CMakeFiles/ITCHParser_tests.dir/tests/ITCHParser_tests.cpp.i
+.PHONY : tests/ITCHParser_tests.cpp.i
+
+tests/ITCHParser_tests.s: tests/ITCHParser_tests.cpp.s
+.PHONY : tests/ITCHParser_tests.s
+
+# target to generate assembly for a file
+tests/ITCHParser_tests.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ITCHParser_tests.dir/build.make CMakeFiles/ITCHParser_tests.dir/tests/ITCHParser_tests.cpp.s
+.PHONY : tests/ITCHParser_tests.cpp.s
+
+tests/SPSCQueue_tests.o: tests/SPSCQueue_tests.cpp.o
+.PHONY : tests/SPSCQueue_tests.o
+
+# target to build an object file
+tests/SPSCQueue_tests.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SPSCQueue_tests.dir/build.make CMakeFiles/SPSCQueue_tests.dir/tests/SPSCQueue_tests.cpp.o
+.PHONY : tests/SPSCQueue_tests.cpp.o
+
+tests/SPSCQueue_tests.i: tests/SPSCQueue_tests.cpp.i
+.PHONY : tests/SPSCQueue_tests.i
+
+# target to preprocess a source file
+tests/SPSCQueue_tests.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SPSCQueue_tests.dir/build.make CMakeFiles/SPSCQueue_tests.dir/tests/SPSCQueue_tests.cpp.i
+.PHONY : tests/SPSCQueue_tests.cpp.i
+
+tests/SPSCQueue_tests.s: tests/SPSCQueue_tests.cpp.s
+.PHONY : tests/SPSCQueue_tests.s
+
+# target to generate assembly for a file
+tests/SPSCQueue_tests.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SPSCQueue_tests.dir/build.make CMakeFiles/SPSCQueue_tests.dir/tests/SPSCQueue_tests.cpp.s
+.PHONY : tests/SPSCQueue_tests.cpp.s
+
 tests/order_book_tests.o: tests/order_book_tests.cpp.o
 .PHONY : tests/order_book_tests.o
 
@@ -265,18 +363,29 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
+	@echo "... ITCHParser_tests"
+	@echo "... SPSCQueue_tests"
 	@echo "... orderbook"
 	@echo "... orderbook_benchmark"
 	@echo "... orderbook_tests"
 	@echo "... benchmark/order_book_benchmark.o"
 	@echo "... benchmark/order_book_benchmark.i"
 	@echo "... benchmark/order_book_benchmark.s"
+	@echo "... src/ITCHParser.o"
+	@echo "... src/ITCHParser.i"
+	@echo "... src/ITCHParser.s"
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"
 	@echo "... src/order_book.o"
 	@echo "... src/order_book.i"
 	@echo "... src/order_book.s"
+	@echo "... tests/ITCHParser_tests.o"
+	@echo "... tests/ITCHParser_tests.i"
+	@echo "... tests/ITCHParser_tests.s"
+	@echo "... tests/SPSCQueue_tests.o"
+	@echo "... tests/SPSCQueue_tests.i"
+	@echo "... tests/SPSCQueue_tests.s"
 	@echo "... tests/order_book_tests.o"
 	@echo "... tests/order_book_tests.i"
 	@echo "... tests/order_book_tests.s"
